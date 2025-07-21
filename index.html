@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SuperPadel Booking</title>
   <style>
     body {
@@ -19,6 +19,12 @@
     h1 {
       text-align: center;
       color: #1a73e8;
+    }
+    #datePicker {
+      display: block;
+      margin: 20px auto;
+      padding: 10px;
+      font-size: 16px;
     }
     .grid {
       display: grid;
@@ -90,6 +96,7 @@
 <body>
   <div class="container">
     <h1>SuperPadel Court Booking</h1>
+    <input type="date" id="datePicker" />
     <div class="grid" id="bookingGrid"></div>
   </div>
 
@@ -102,7 +109,6 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getDatabase, ref, push, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
@@ -114,8 +120,7 @@
       projectId: "reservas-superpadel",
       storageBucket: "reservas-superpadel.firebasestorage.app",
       messagingSenderId: "736124396684",
-      appId: "1:736124396684:web:c0f3921a2b1ba354bcc7a9",
-      measurementId: "G-9TFLZ06CM3"
+      appId: "1:736124396684:web:c0f3921a2b1ba354bcc7a9"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -127,10 +132,21 @@
     ];
     const courts = [1, 2, 3];
     const bookedSlots = new Set();
+    let selectedDate = null;
+
+    const dateInput = document.getElementById("datePicker");
+    dateInput.valueAsDate = new Date();
+
+    dateInput.addEventListener("change", () => {
+      selectedDate = dateInput.value;
+      loadBookings();
+    });
 
     function buildGrid() {
       const grid = document.getElementById('bookingGrid');
       grid.innerHTML = '';
+
+      if (!selectedDate) return;
 
       courts.forEach(court => {
         const column = document.createElement('div');
@@ -168,10 +184,11 @@
       const name = document.getElementById("name").value.trim();
       const phone = document.getElementById("phone").value.trim();
       const slot = document.getElementById("formContainer").dataset.slot;
-      if (!name || !phone) return alert("Please enter name and phone.");
+
+      if (!name || !phone || !selectedDate) return alert("Please fill all fields and select a date.");
 
       const [time, court] = slot.split(" - Court ");
-      await push(ref(db, 'bookings/'), {
+      await push(ref(db, `bookings/${selectedDate}/`), {
         timestamp: new Date().toISOString(),
         time,
         court,
@@ -179,28 +196,37 @@
         phone
       });
 
-      alert(`Booking confirmed for ${slot}`);
+      alert(`Booking confirmed for ${selectedDate}, ${slot}`);
 
-      // Optional: WhatsApp message URL (for manual testing only)
-      const message = `Hello ${name}, your booking for Court ${court} at ${time} is confirmed!`;
+      // Optional WhatsApp message
+      /*
+      const message = `Hello ${name}, your booking for Court ${court} at ${time} on ${selectedDate} is confirmed!`;
       const whatsappURL = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
       window.open(whatsappURL, '_blank');
+      */
 
       document.getElementById("formContainer").style.display = "none";
       bookedSlots.add(slot);
       buildGrid();
     };
 
-    onValue(ref(db, 'bookings/'), snapshot => {
-      bookedSlots.clear();
-      const data = snapshot.val();
-      if (data) {
-        Object.values(data).forEach(({ time, court }) => {
-          bookedSlots.add(`${time} - Court ${court}`);
-        });
-      }
-      buildGrid();
-    });
+    function loadBookings() {
+      if (!selectedDate) return;
+      onValue(ref(db, `bookings/${selectedDate}/`), snapshot => {
+        bookedSlots.clear();
+        const data = snapshot.val();
+        if (data) {
+          Object.values(data).forEach(({ time, court }) => {
+            bookedSlots.add(`${time} - Court ${court}`);
+          });
+        }
+        buildGrid();
+      });
+    }
+
+    // Initialize
+    selectedDate = dateInput.value;
+    loadBookings();
   </script>
 </body>
 </html>
