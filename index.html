@@ -96,7 +96,7 @@
 <body>
   <div class="container">
     <h1>SuperPadel Court Booking</h1>
-    <input type="date" id="datePicker" />
+    <input type="date" id="datePicker" min="" max="" />
     <div class="grid" id="bookingGrid"></div>
   </div>
 
@@ -135,7 +135,22 @@
     let selectedDate = null;
 
     const dateInput = document.getElementById("datePicker");
-    dateInput.valueAsDate = new Date();
+    
+	// Limit to today up to 7 days ahead
+	const today = new Date();
+	const yyyy = today.getFullYear();
+	const mm = String(today.getMonth() + 1).padStart(2, "0");
+	const dd = String(today.getDate()).padStart(2, "0");
+	const todayStr = `${yyyy}-${mm}-${dd}`;
+
+	const maxDate = new Date();
+	maxDate.setDate(today.getDate() + 7);
+	const maxStr = `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, "0")}-${String(maxDate.getDate()).padStart(2, "0")}`;
+
+	dateInput.min = todayStr;
+	dateInput.max = maxStr;
+	dateInput.valueAsDate = today;
+	selectedDate = dateInput.value;
 
     dateInput.addEventListener("change", () => {
       selectedDate = dateInput.value;
@@ -143,36 +158,47 @@
     });
 
     function buildGrid() {
-      const grid = document.getElementById('bookingGrid');
-      grid.innerHTML = '';
+	  const grid = document.getElementById('bookingGrid');
+	  grid.innerHTML = '';
 
-      if (!selectedDate) return;
+	  if (!selectedDate) return;
 
-      courts.forEach(court => {
-        const column = document.createElement('div');
-        column.className = 'court-column';
+	  const now = new Date();
+	  const isToday = selectedDate === now.toISOString().split("T")[0];
 
-        const title = document.createElement('div');
-        title.className = 'court-title';
-        title.textContent = `Court ${court}`;
-        column.appendChild(title);
+	  const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+	  const cutoffTime = `${String(nextHour.getHours()).padStart(2, "0")}:00`;
 
-        times.forEach(time => {
-          const key = `${time} - Court ${court}`;
-          const slot = document.createElement('div');
-          slot.className = 'slot';
-          slot.textContent = time;
-          if (bookedSlots.has(key)) {
-            slot.classList.add('booked');
-          } else {
-            slot.onclick = () => openForm(key);
-          }
-          column.appendChild(slot);
-        });
+	  courts.forEach(court => {
+		const column = document.createElement('div');
+		column.className = 'court-column';
 
-        grid.appendChild(column);
-      });
-    }
+		const title = document.createElement('div');
+		title.className = 'court-title';
+		title.textContent = `Court ${court}`;
+		column.appendChild(title);
+
+		times.forEach(time => {
+		  const key = `${time} - Court ${court}`;
+		  const slot = document.createElement('div');
+		  slot.className = 'slot';
+		  slot.textContent = time;
+
+		  const timeIsPast = isToday && time < cutoffTime;
+
+		  if (bookedSlots.has(key) || timeIsPast) {
+			slot.classList.add('booked');
+		  } else {
+			slot.onclick = () => openForm(key);
+		  }
+
+		  column.appendChild(slot);
+		});
+
+		grid.appendChild(column);
+	  });
+	}
+
 
     function openForm(slot) {
       const formContainer = document.getElementById("formContainer");
@@ -181,34 +207,35 @@
     }
 
     window.submitBooking = async function () {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const slot = document.getElementById("formContainer").dataset.slot;
+	  const name = document.getElementById("name").value.trim();
+	  const phone = document.getElementById("phone").value.trim();
+	  const slot = document.getElementById("formContainer").dataset.slot;
 
-      if (!name || !phone || !selectedDate) return alert("Please fill all fields and select a date.");
+	  if (!name || !phone) return alert("Please enter name and phone.");
 
-      const [time, court] = slot.split(" - Court ");
-      await push(ref(db, `bookings/${selectedDate}/`), {
-        timestamp: new Date().toISOString(),
-        time,
-        court,
-        name,
-        phone
-      });
+	  const [time, court] = slot.split(" - Court ");
+	  const bookingDateTime = new Date(`${selectedDate}T${time}:00`);
+	  const nowPlusOneHour = new Date(Date.now() + 60 * 60 * 1000);
 
-      alert(`Booking confirmed for ${selectedDate}, ${slot}`);
+	  if (bookingDateTime < nowPlusOneHour) {
+		return alert("You cannot book a time slot in the past or less than 1 hour from now.");
+	  }
 
-      // Optional WhatsApp message
-      /*
-      const message = `Hello ${name}, your booking for Court ${court} at ${time} on ${selectedDate} is confirmed!`;
-      const whatsappURL = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappURL, '_blank');
-      */
+	  await push(ref(db, 'bookings/'), {
+		timestamp: new Date().toISOString(),
+		date: selectedDate,
+		time,
+		court,
+		name,
+		phone
+	  });
 
-      document.getElementById("formContainer").style.display = "none";
-      bookedSlots.add(slot);
-      buildGrid();
-    };
+	  alert(`Booking confirmed for ${slot} on ${selectedDate}`);
+	  document.getElementById("formContainer").style.display = "none";
+	  bookedSlots.add(slot);
+	  buildGrid();
+	};
+
 
     function loadBookings() {
       if (!selectedDate) return;
