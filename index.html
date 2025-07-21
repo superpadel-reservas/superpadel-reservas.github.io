@@ -130,8 +130,8 @@
     }
 
     async function submitBooking() {
-      const name = document.getElementById('name').value;
-      const phone = document.getElementById('phone').value;
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
       const slot = document.getElementById('formContainer').dataset.slot;
     
       if (!name || !phone) {
@@ -160,15 +160,17 @@
         if (result.success) {
           alert(`Booking confirmed for ${slot}`);
           document.getElementById('formContainer').style.display = 'none';
-          location.reload(); // Optionally update the UI
+          location.reload();
         } else {
-          alert('Error saving booking. Try again.');
+          alert('Something went wrong. Server responded but booking failed.');
+          console.log(result);
         }
       } catch (error) {
-        console.error('Booking failed', error);
-        alert('Error connecting to the server.');
+        console.error('Fetch error:', error);
+        alert('Could not connect to booking server. Please check your URL and deployment access.');
       }
     }
+
 
   </script>
 </body>
