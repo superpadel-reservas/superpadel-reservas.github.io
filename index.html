@@ -12,7 +12,7 @@
       background: #f4f4f4;
     }
     .container {
-      max-width: 800px;
+      max-width: 1000px;
       margin: auto;
       padding: 20px;
     }
@@ -22,18 +22,30 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 10px;
       margin-top: 20px;
     }
-    .slot {
-      background: white;
+    .court-column {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
       padding: 10px;
+    }
+    .court-title {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #1a73e8;
+    }
+    .slot {
+      background: #fff;
+      padding: 8px;
       border-radius: 6px;
       text-align: center;
       border: 1px solid #ccc;
+      margin-bottom: 5px;
       cursor: pointer;
-      font-size: 0.9em;
     }
     .slot.booked {
       background: #ddd;
@@ -50,7 +62,6 @@
       background: rgba(0, 0, 0, 0.6);
       justify-content: center;
       align-items: center;
-      z-index: 999;
     }
     .formBox {
       background: white;
@@ -73,12 +84,6 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      width: 100%;
-    }
-    @media (max-width: 600px) {
-      .grid {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      }
     }
   </style>
 </head>
@@ -92,7 +97,7 @@
     <div class="formBox">
       <h3>Book Slot</h3>
       <input type="text" id="name" placeholder="Your name" />
-      <input type="tel" id="phone" placeholder="Phone number" />
+      <input type="text" id="phone" placeholder="Phone number" />
       <button onclick="submitBooking()">Confirm Booking</button>
     </div>
   </div>
@@ -126,19 +131,30 @@
     function buildGrid() {
       const grid = document.getElementById('bookingGrid');
       grid.innerHTML = '';
-      times.forEach(time => {
-        courts.forEach(court => {
+
+      courts.forEach(court => {
+        const column = document.createElement('div');
+        column.className = 'court-column';
+
+        const title = document.createElement('div');
+        title.className = 'court-title';
+        title.textContent = `Court ${court}`;
+        column.appendChild(title);
+
+        times.forEach(time => {
           const key = `${time} - Court ${court}`;
           const slot = document.createElement('div');
           slot.className = 'slot';
-          slot.textContent = key;
+          slot.textContent = time;
           if (bookedSlots.has(key)) {
             slot.classList.add('booked');
           } else {
             slot.onclick = () => openForm(key);
           }
-          grid.appendChild(slot);
+          column.appendChild(slot);
         });
+
+        grid.appendChild(column);
       });
     }
 
@@ -164,6 +180,12 @@
       });
 
       alert(`Booking confirmed for ${slot}`);
+
+      // Optional: WhatsApp message URL (for manual testing only)
+      const message = `Hello ${name}, your booking for Court ${court} at ${time} is confirmed!`;
+      const whatsappURL = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappURL, '_blank');
+
       document.getElementById("formContainer").style.display = "none";
       bookedSlots.add(slot);
       buildGrid();
