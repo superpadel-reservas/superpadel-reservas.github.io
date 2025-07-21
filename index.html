@@ -68,7 +68,7 @@
   </style>
 </head>
 <body>
-  <h1>Book a Court</h1>
+  <h1>Book a Court v0.1</h1>
   <table id="bookingGrid">
     <thead>
       <tr>
@@ -124,10 +124,11 @@
     }
 
     function showForm(time, court) {
-      document.getElementById('selectedSlot').textContent = `${time} - Court ${court}`;
-      document.getElementById('formContainer').style.display = 'block';
-      document.getElementById('formContainer').dataset.slot = `${time}-Court ${court}`;
-    }
+	  console.log("Form opened for:", time, court);
+	  document.getElementById('selectedSlot').textContent = `${time} - Court ${court}`;
+	  document.getElementById('formContainer').style.display = 'block';
+	  document.getElementById('formContainer').dataset.slot = `${time} - Court ${court}`; // <-- FIXED
+	}
 
     async function submitBooking() {
       const name = document.getElementById('name').value.trim();
@@ -170,7 +171,6 @@
         alert('Could not connect to booking server. Please check your URL and deployment access.');
       }
     }
-
 
   </script>
 </body>
