@@ -2,258 +2,160 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SuperPadel Booking</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f4f4f4;
-    }
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #1a73e8;
-    }
-    #datePicker {
-      display: block;
-      margin: 20px auto;
-      padding: 10px;
-      font-size: 16px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    .court-column {
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 10px;
-    }
-    .court-title {
-      text-align: center;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #1a73e8;
-    }
-    .slot {
-      background: #fff;
-      padding: 8px;
-      border-radius: 6px;
-      text-align: center;
-      border: 1px solid #ccc;
-      margin-bottom: 5px;
-      cursor: pointer;
-    }
-    .slot.booked {
-      background: #ddd;
-      color: #999;
-      cursor: not-allowed;
-    }
-    #formContainer {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
-      justify-content: center;
-      align-items: center;
-    }
-    .formBox {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 400px;
-    }
-    .formBox input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .formBox button {
-      padding: 10px 20px;
-      background: #1a73e8;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Padel Court Booking</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 </head>
-<body>
-  <div class="container">
-    <h1>SuperPadel Court Booking</h1>
-    <input type="date" id="datePicker" min="" max="" />
-    <div class="grid" id="bookingGrid"></div>
-  </div>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-4xl mx-auto p-4">
+    <h1 class="text-2xl font-bold text-center mb-4">Super Padel Court Booking</h1>
 
-  <div id="formContainer">
-    <div class="formBox">
-      <h3>Book Slot</h3>
-      <input type="text" id="name" placeholder="Your name" />
-      <input type="text" id="phone" placeholder="Phone number" />
-      <button onclick="submitBooking()">Confirm Booking</button>
+    <!-- Date Selector -->
+    <div class="mb-4 text-center">
+      <label for="datePicker" class="font-semibold">Select Date:</label>
+      <input type="date" id="datePicker" class="ml-2 p-1 border border-gray-300 rounded" />
+    </div>
+
+    <!-- Booking Grid -->
+    <div id="grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+
+    <!-- Booking Form -->
+    <div id="formContainer" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center hidden">
+      <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+        <h2 class="text-xl font-bold mb-4" id="formSlot"></h2>
+        <input type="text" id="name" placeholder="Your name" class="w-full mb-2 p-2 border rounded" />
+        <input type="text" id="phone" placeholder="Phone number" class="w-full mb-4 p-2 border rounded" />
+        <div class="flex justify-between">
+          <button onclick="submitBooking()" class="bg-green-500 text-white px-4 py-2 rounded">Book</button>
+          <button onclick="closeForm()" class="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getDatabase, ref, push, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+<script>
+  const { DateTime } = luxon;
+  const CLUB_TIMEZONE = 'America/Mexico_City';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBOq0oFBM791lCs9th8wkVTGSHvLR1k_Hc",
-      authDomain: "reservas-superpadel.firebaseapp.com",
-      databaseURL: "https://reservas-superpadel-default-rtdb.firebaseio.com",
-      projectId: "reservas-superpadel",
-      storageBucket: "reservas-superpadel.firebasestorage.app",
-      messagingSenderId: "736124396684",
-      appId: "1:736124396684:web:c0f3921a2b1ba354bcc7a9"
-    };
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    const times = [
-      "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00",
-      "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"
-    ];
-    const courts = [1, 2, 3];
-    const bookedSlots = new Set();
-    let selectedDate = null;
+  const bookedSlots = new Set();
+  const hours = [...Array(17).keys()].map(i => i + 7); // 7AM to 11PM
+  const courts = ["1", "2", "3"];
 
-    const dateInput = document.getElementById("datePicker");
-    
-	// Limit to today up to 7 days ahead
-	const today = new Date();
-	const yyyy = today.getFullYear();
-	const mm = String(today.getMonth() + 1).padStart(2, "0");
-	const dd = String(today.getDate()).padStart(2, "0");
-	const todayStr = `${yyyy}-${mm}-${dd}`;
+  function buildGrid() {
+    const selectedDate = DateTime.fromISO(document.getElementById("datePicker").value, { zone: CLUB_TIMEZONE });
+    const now = DateTime.now().setZone(CLUB_TIMEZONE);
 
-	const maxDate = new Date();
-	maxDate.setDate(today.getDate() + 7);
-	const maxStr = `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, "0")}-${String(maxDate.getDate()).padStart(2, "0")}`;
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    courts.forEach(court => {
+      const col = document.createElement("div");
+      col.className = "bg-white p-2 rounded shadow";
+      const heading = document.createElement("h3");
+      heading.className = "font-bold text-lg mb-2 text-center";
+      heading.textContent = `Court ${court}`;
+      col.appendChild(heading);
 
-	dateInput.min = todayStr;
-	dateInput.max = maxStr;
-	dateInput.valueAsDate = today;
-	selectedDate = dateInput.value;
+      hours.forEach(h => {
+        const slotTime = selectedDate.set({ hour: h, minute: 0 });
+        const timeLabel = slotTime.toFormat("hh:mm a");
+        const slotKey = `${selectedDate.toISODate()} ${timeLabel} - Court ${court}`;
 
-    dateInput.addEventListener("change", () => {
-      selectedDate = dateInput.value;
-      loadBookings();
-    });
+        const btn = document.createElement("button");
+        btn.textContent = timeLabel;
+        btn.className = "w-full mb-1 py-1 rounded " +
+          (bookedSlots.has(slotKey) ? "bg-red-400 text-white cursor-not-allowed" : (slotTime.diff(now, 'minutes').minutes < 60 ? "bg-gray-300 cursor-not-allowed" : "bg-green-500 text-white"));
 
-    function buildGrid() {
-	  const grid = document.getElementById('bookingGrid');
-	  grid.innerHTML = '';
-
-	  if (!selectedDate) return;
-
-	  const now = new Date();
-	  const isToday = selectedDate === now.toISOString().split("T")[0];
-
-	  const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
-	  const cutoffTime = `${String(nextHour.getHours()).padStart(2, "0")}:00`;
-
-	  courts.forEach(court => {
-		const column = document.createElement('div');
-		column.className = 'court-column';
-
-		const title = document.createElement('div');
-		title.className = 'court-title';
-		title.textContent = `Court ${court}`;
-		column.appendChild(title);
-
-		times.forEach(time => {
-		  const key = `${time} - Court ${court}`;
-		  const slot = document.createElement('div');
-		  slot.className = 'slot';
-		  slot.textContent = time;
-
-		  const timeIsPast = isToday && time < cutoffTime;
-
-		  if (bookedSlots.has(key) || timeIsPast) {
-			slot.classList.add('booked');
-		  } else {
-			slot.onclick = () => openForm(key);
-		  }
-
-		  column.appendChild(slot);
-		});
-
-		grid.appendChild(column);
-	  });
-	}
-
-
-    function openForm(slot) {
-      const formContainer = document.getElementById("formContainer");
-      formContainer.dataset.slot = slot;
-      formContainer.style.display = 'flex';
-    }
-
-    window.submitBooking = async function () {
-	  const name = document.getElementById("name").value.trim();
-	  const phone = document.getElementById("phone").value.trim();
-	  const slot = document.getElementById("formContainer").dataset.slot;
-
-	  if (!name || !phone) return alert("Please enter name and phone.");
-
-	  const [time, court] = slot.split(" - Court ");
-	  const bookingDateTime = new Date(`${selectedDate}T${time}:00`);
-	  const nowPlusOneHour = new Date(Date.now() + 60 * 60 * 1000);
-
-	  if (bookingDateTime < nowPlusOneHour) {
-		return alert("You cannot book a time slot in the past or less than 1 hour from now.");
-	  }
-
-	  await push(ref(db, 'bookings/'), {
-		timestamp: new Date().toISOString(),
-		date: selectedDate,
-		time,
-		court,
-		name,
-		phone
-	  });
-
-	  alert(`Booking confirmed for ${slot} on ${selectedDate}`);
-	  document.getElementById("formContainer").style.display = "none";
-	  bookedSlots.add(slot);
-	  buildGrid();
-	};
-
-
-    function loadBookings() {
-      if (!selectedDate) return;
-      onValue(ref(db, `bookings/${selectedDate}/`), snapshot => {
-        bookedSlots.clear();
-        const data = snapshot.val();
-        if (data) {
-          Object.values(data).forEach(({ time, court }) => {
-            bookedSlots.add(`${time} - Court ${court}`);
-          });
+        if (!bookedSlots.has(slotKey) && slotTime.diff(now, 'minutes').minutes >= 60) {
+          btn.onclick = () => openForm(slotKey);
         }
-        buildGrid();
+
+        col.appendChild(btn);
+      });
+
+      grid.appendChild(col);
+    });
+  }
+
+  function openForm(slot) {
+    document.getElementById("formSlot").textContent = slot;
+    document.getElementById("formContainer").style.display = "flex";
+    document.getElementById("formContainer").dataset.slot = slot;
+  }
+
+  function closeForm() {
+    document.getElementById("formContainer").style.display = "none";
+  }
+
+  async function loadBookings() {
+    bookedSlots.clear();
+    const snapshot = await db.ref("bookings").once("value");
+    const data = snapshot.val();
+    if (data) {
+      Object.values(data).forEach(entry => {
+        const dateTime = DateTime.fromISO(entry.date, { zone: CLUB_TIMEZONE });
+        const timeLabel = dateTime.toFormat("hh:mm a");
+        const slotKey = `${dateTime.toISODate()} ${timeLabel} - Court ${entry.court}`;
+        bookedSlots.add(slotKey);
       });
     }
+    buildGrid();
+  }
 
-    // Initialize
-    selectedDate = dateInput.value;
+  window.submitBooking = async function () {
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const slot = document.getElementById("formContainer").dataset.slot;
+    if (!name || !phone) return alert("Please enter name and phone.");
+
+    const [date, rest] = slot.split(" ");
+    const [timeLabel, , court] = rest.split(" ");
+    const dt = DateTime.fromFormat(`${date} ${timeLabel}`, "yyyy-MM-dd hh:mm a", { zone: CLUB_TIMEZONE });
+
+    const now = DateTime.now().setZone(CLUB_TIMEZONE);
+    if (dt.diff(now, 'minutes').minutes < 60) return alert("Bookings must be made at least 1 hour in advance.");
+
+    await db.ref("bookings").push({
+      name,
+      phone,
+      court,
+      date: dt.toISO(),
+      timestamp: now.toISO()
+    });
+
+    alert(`Booking confirmed for ${slot}`);
+    document.getElementById("formContainer").style.display = "none";
+    bookedSlots.add(slot);
+    buildGrid();
+  };
+
+  document.getElementById("datePicker").addEventListener("change", () => {
+    buildGrid();
+  });
+
+  window.onload = () => {
+    const today = DateTime.now().setZone(CLUB_TIMEZONE);
+    const maxDate = today.plus({ days: 7 }).toISODate();
+    document.getElementById("datePicker").value = today.toISODate();
+    document.getElementById("datePicker").min = today.toISODate();
+    document.getElementById("datePicker").max = maxDate;
     loadBookings();
-  </script>
+  };
+</script>
 </body>
 </html>
