@@ -2,205 +2,277 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Super Padel Booking</title>
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SuperPadel Booking</title>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 1em; margin: 0; }
-    h1 { text-align: center; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5em; margin-top: 1em; }
-    .slot { padding: 1em; border: 1px solid #ccc; text-align: center; border-radius: 6px; cursor: pointer; background: #f9f9f9; }
-    .slot.booked { background: #ccc; pointer-events: none; }
-    #formContainer, #categoryModal, #playersModal { display: none; position: fixed; top: 10%; left: 50%; transform: translateX(-50%); background: white; border: 1px solid #ccc; padding: 1em; z-index: 10; max-width: 300px; width: 90%; border-radius: 8px; }
-    .modal-title { margin-top: 0; }
-    .player-button, .category-button { display: block; margin: 0.3em 0; padding: 0.5em; border-radius: 4px; border: 1px solid #444; background: #e3e3e3; cursor: pointer; }
-    .backdrop { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 5; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #1a73e8;
+    }
+    .controls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .controls input {
+      padding: 10px;
+      font-size: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    .court-column {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .court-title {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #1a73e8;
+    }
+    .slot {
+      background: #fff;
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      border: 1px solid #ccc;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+    .slot.booked {
+      background: #ddd;
+      color: #999;
+      cursor: not-allowed;
+    }
+    #formContainer,
+    #categoryModal,
+    #playersModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+    }
+    .formBox {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+    }
+    .formBox input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .formBox button {
+      padding: 10px 20px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
-  <h1>Super Padel Court Booking</h1>
+  <h1>SuperPadel Booking</h1>
+  <div class="controls">
+    <input type="date" id="datePicker" />
+  </div>
+  <div class="grid" id="bookingGrid"></div>
 
-  <label for="datePicker">Select date:</label>
-  <input type="date" id="datePicker" />
-
-  <div id="slots" class="grid"></div>
-
+  <!-- Booking Form -->
   <div id="formContainer">
-    <h3 class="modal-title">Confirm Booking</h3>
-    <input type="text" id="name" placeholder="Your Name" /><br /><br />
-    <input type="text" id="phone" placeholder="Phone Number" /><br /><br />
-    <button onclick="submitBooking()">Book</button>
-    <button onclick="openLeagueModal()">League Game</button>
+    <div class="formBox">
+      <h3>Book Slot</h3>
+      <input type="text" id="name" placeholder="Your name" />
+      <input type="text" id="phone" placeholder="Phone number" />
+      <button onclick="submitBooking()">Book</button>
+      <button onclick="showCategoryModal()">LEAGUE GAME</button>
+    </div>
   </div>
 
+  <!-- Category Modal -->
   <div id="categoryModal">
-    <h3 class="modal-title">Select Category</h3>
-    <div id="categories"></div>
+    <div class="formBox">
+      <h3>Select Category</h3>
+      <button onclick="selectCategory('4th')">4th Category</button>
+      <button onclick="selectCategory('5th')">5th Category</button>
+      <button onclick="selectCategory('Mixed')">Mixed Category</button>
+    </div>
   </div>
 
+  <!-- Players Modal -->
   <div id="playersModal">
-    <h3 class="modal-title">Select Players</h3>
-    <div id="playersList"></div>
+    <div class="formBox">
+      <h3>Select Players</h3>
+      <div id="playersList"></div>
+    </div>
   </div>
-
-  <div class="backdrop" id="backdrop" onclick="closeAllModals()"></div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getDatabase, ref, push, onValue, get, child } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getDatabase, ref, push, onValue, get, child } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
     const { DateTime } = luxon;
+    const TZ = 'America/Mexico_City';
 
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      databaseURL: "YOUR_DB_URL",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyBOq0oFBM791lCs9th8wkVTGSHvLR1k_Hc",
+      authDomain: "reservas-superpadel.firebaseapp.com",
+      databaseURL: "https://reservas-superpadel-default-rtdb.firebaseio.com",
+      projectId: "reservas-superpadel",
+      storageBucket: "reservas-superpadel.appspot.com",
+      messagingSenderId: "736124396684",
+      appId: "1:736124396684:web:c0f3921a2b1ba354bcc7a9"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const clubZone = "America/Mexico_City";
 
-    const slotTimes = ["07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"];
-    const courts = ["1", "2", "3"];
-    let bookedSlots = new Set();
-    let selectedSlot = null;
-    let leagueInfo = null;
+    const bookingGrid = document.getElementById('bookingGrid');
+    const datePicker = document.getElementById('datePicker');
+    const bookedSlots = new Set();
+    const courts = [1, 2, 3];
+    const times = [
+      "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00",
+      "14:00", "15:00", "16:00", "17:00", "18:00", "19:00",
+      "20:00", "21:00", "22:00", "23:00"
+    ];
+
+    const todayMX = DateTime.now().setZone(TZ);
+    datePicker.value = todayMX.toISODate();
+    const maxDate = todayMX.plus({ days: 7 }).toISODate();
+    datePicker.min = todayMX.toISODate();
+    datePicker.max = maxDate;
+    datePicker.addEventListener('change', buildGrid);
+
+    onValue(ref(db, 'bookings/'), snapshot => {
+      bookedSlots.clear();
+      const data = snapshot.val();
+      if (data) {
+        Object.values(data).forEach(({ date, time, court }) => {
+          bookedSlots.add(`${date}_${time}_Court${court}`);
+        });
+      }
+      buildGrid();
+    });
 
     function buildGrid() {
-      const container = document.getElementById("slots");
-      container.innerHTML = "";
-      const date = DateTime.fromISO(document.getElementById("datePicker").value, { zone: clubZone }).toFormat("yyyy-MM-dd");
-      slotTimes.forEach(time => {
-        courts.forEach(court => {
-          const key = `${date}_${time}_Court ${court}`;
-          const btn = document.createElement("div");
-          btn.className = "slot";
-          btn.textContent = `${time} - Court ${court}`;
-          if (bookedSlots.has(key)) btn.classList.add("booked");
-          btn.onclick = () => {
-            selectedSlot = key;
-            document.getElementById("formContainer").style.display = "block";
-            document.getElementById("backdrop").style.display = "block";
-          };
-          container.appendChild(btn);
+      const selectedDate = datePicker.value;
+      bookingGrid.innerHTML = '';
+      if (!selectedDate) return;
+      courts.forEach(court => {
+        const column = document.createElement('div');
+        column.className = 'court-column';
+        const title = document.createElement('div');
+        title.className = 'court-title';
+        title.textContent = `Court ${court}`;
+        column.appendChild(title);
+        times.forEach(time => {
+          const key = `${selectedDate}_${time}_Court${court}`;
+          const slot = document.createElement('div');
+          slot.className = 'slot';
+          slot.textContent = time;
+          const now = DateTime.now().setZone(TZ);
+          const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
+          const isPast = slotDateTime <= now.plus({ hours: 1 });
+          if (bookedSlots.has(key) || isPast) {
+            slot.classList.add('booked');
+          } else {
+            slot.onclick = () => openForm(key);
+          }
+          column.appendChild(slot);
         });
+        bookingGrid.appendChild(column);
       });
     }
 
-    async function fetchBookings() {
-      bookedSlots.clear();
-      const snap = await get(ref(db, 'bookings'));
-      snap.forEach(child => {
-        const b = child.val();
-        const date = DateTime.fromISO(b.date, { zone: clubZone }).toFormat("yyyy-MM-dd");
-        const key = `${date}_${b.time}_Court ${b.court}`;
-        bookedSlots.add(key);
-      });
-      buildGrid();
+    let currentSlot = null;
+    function openForm(slotKey) {
+      currentSlot = slotKey;
+      document.getElementById('formContainer').style.display = 'flex';
     }
 
     window.submitBooking = async function () {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      if (!name || !phone) return alert("Please enter name and phone.");
-
-      const [date, time, , court] = selectedSlot.split(/_| - Court /);
-      const now = DateTime.now().setZone(clubZone);
-      const slotDT = DateTime.fromFormat(`${date} ${time}`, "yyyy-MM-dd HH:mm", { zone: clubZone });
-      if (slotDT < now.plus({ hours: 1 })) return alert("Booking must be at least 1 hour ahead.");
-
-      await push(ref(db, 'bookings'), {
-        timestamp: new Date().toISOString(),
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      if (!name || !phone || !currentSlot) return alert('Please fill all fields.');
+      const [date, time, courtPart] = currentSlot.split('_');
+      const court = courtPart.replace('Court', '');
+      await push(ref(db, 'bookings/'), {
+        timestamp: DateTime.now().setZone(TZ).toISO(),
+        name,
+        phone,
         date,
         time,
         court,
-        name,
-        phone,
-        league: leagueInfo?.league || false,
-        category: leagueInfo?.category || null,
-        players: leagueInfo?.players || null
+        type: 'regular'
       });
-
-      closeAllModals();
-      leagueInfo = null;
-      await fetchBookings();
+      alert(`Booking confirmed for Court ${court} at ${time} on ${date}`);
+      bookedSlots.add(currentSlot);
+      document.getElementById('formContainer').style.display = 'none';
+      buildGrid();
     };
 
-    window.openLeagueModal = function () {
-      document.getElementById("formContainer").style.display = "none";
-      document.getElementById("categoryModal").style.display = "block";
-      document.getElementById("backdrop").style.display = "block";
-      const categories = ["4th category", "5th category", "Mixed Category"];
-      const container = document.getElementById("categories");
-      container.innerHTML = "";
-      categories.forEach(cat => {
-        const btn = document.createElement("button");
-        btn.textContent = cat;
-        btn.className = "category-button";
-        btn.onclick = () => fetchPlayers(cat);
-        container.appendChild(btn);
-      });
+    window.showCategoryModal = function () {
+      document.getElementById('formContainer').style.display = 'none';
+      document.getElementById('categoryModal').style.display = 'flex';
     };
 
-    async function fetchPlayers(category) {
-      const playersRef = ref(db, `players/${category}`);
-      const snapshot = await get(playersRef);
-      if (!snapshot.exists()) return alert("No players in this category");
-
-      const playerData = snapshot.val();
-      const container = document.getElementById("playersList");
-      container.innerHTML = "";
-      const names = Object.values(playerData).map(p => p.name);
-
-      names.forEach(player1 => {
-        const p1Btn = document.createElement("button");
-        p1Btn.className = "player-button";
-        p1Btn.textContent = player1;
-        p1Btn.onclick = () => {
-          container.innerHTML = "<strong>Select opponent:</strong><br />";
-          names.filter(p => p !== player1).forEach(player2 => {
-            const p2Btn = document.createElement("button");
-            p2Btn.className = "player-button";
-            p2Btn.textContent = player2;
-            p2Btn.onclick = () => {
-              leagueInfo = {
-                league: true,
-                category,
-                players: [player1, player2]
-              };
-              closeAllModals();
-              document.getElementById("formContainer").style.display = "block";
-            };
-            container.appendChild(p2Btn);
-          });
-        };
-        container.appendChild(p1Btn);
+    window.selectCategory = async function (category) {
+      document.getElementById('categoryModal').style.display = 'none';
+      const snapshot = await get(ref(db, `players/${category}`));
+      const players = snapshot.val();
+      const listDiv = document.getElementById('playersList');
+      listDiv.innerHTML = '';
+      if (!players) return;
+      Object.values(players).forEach(player => {
+        const btn = document.createElement('button');
+        btn.textContent = player;
+        btn.onclick = () => confirmLeagueBooking(category, player);
+        listDiv.appendChild(btn);
       });
-
-      document.getElementById("categoryModal").style.display = "none";
-      document.getElementById("playersModal").style.display = "block";
-    }
-
-    window.closeAllModals = function () {
-      document.querySelectorAll("#formContainer, #categoryModal, #playersModal").forEach(e => e.style.display = "none");
-      document.getElementById("backdrop").style.display = "none";
+      document.getElementById('playersModal').style.display = 'flex';
     };
 
-    const dateInput = document.getElementById("datePicker");
-    const today = DateTime.now().setZone(clubZone);
-    const maxDate = today.plus({ days: 7 });
-    dateInput.min = today.toISODate();
-    dateInput.max = maxDate.toISODate();
-    dateInput.value = today.toISODate();
-    dateInput.addEventListener("change", fetchBookings);
-
-    fetchBookings();
+    window.confirmLeagueBooking = async function (category, player1) {
+      const [date, time, courtPart] = currentSlot.split('_');
+      const court = courtPart.replace('Court', '');
+      await push(ref(db, 'bookings/'), {
+        timestamp: DateTime.now().setZone(TZ).toISO(),
+        name: 'LEAGUE GAME',
+        category,
+        players: [player1],
+        date,
+        time,
+        court,
+        type: 'league'
+      });
+      alert(`LEAGUE GAME booked: ${category} with ${player1}`);
+      bookedSlots.add(currentSlot);
+      document.getElementById('playersModal').style.display = 'none';
+      buildGrid();
+    };
   </script>
 </body>
 </html>
