@@ -129,19 +129,47 @@
       document.getElementById('formContainer').dataset.slot = `${time}-Court ${court}`;
     }
 
-    function submitBooking() {
+    async function submitBooking() {
       const name = document.getElementById('name').value;
       const phone = document.getElementById('phone').value;
       const slot = document.getElementById('formContainer').dataset.slot;
-
-      if (name && phone) {
-        alert(`Booking confirmed for ${slot}\nName: ${name}\nPhone: ${phone}`);
-        document.getElementById('formContainer').style.display = 'none';
-        location.reload();
-      } else {
+    
+      if (!name || !phone) {
         alert('Please enter name and phone number.');
+        return;
+      }
+    
+      const [time, court] = slot.split(' - Court ');
+      const payload = {
+        time: time.trim(),
+        court: court.trim(),
+        name,
+        phone
+      };
+    
+      try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbx9H7CHQyzKwyFyAgerXHbxOOEG7cbgAurdrdoIvPtJzakbT_PJnT-N1AKXkuNBedim/exec', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+    
+        const result = await response.json();
+        if (result.success) {
+          alert(`Booking confirmed for ${slot}`);
+          document.getElementById('formContainer').style.display = 'none';
+          location.reload(); // Optionally update the UI
+        } else {
+          alert('Error saving booking. Try again.');
+        }
+      } catch (error) {
+        console.error('Booking failed', error);
+        alert('Error connecting to the server.');
       }
     }
+
   </script>
 </body>
 </html>
