@@ -216,20 +216,27 @@
         title.textContent = `Cancha ${court}`;
         column.appendChild(title);
         times.forEach(time => {
-          const key = `${selectedDate}_${time}_Court${court}`;
-          const slot = document.createElement('div');
-          slot.className = 'slot';
-          slot.textContent = time;
-          const now = DateTime.now().setZone(TZ);
-          const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
-          const isPast = slotDateTime <= now.plus({ hours: 1 });
-          if (bookedSlots.has(key) || isPast) {
-            slot.classList.add('booked');
-          } else {
-            slot.onclick = () => openForm(key);
-          }
-          column.appendChild(slot);
-        });
+		  const key = `${selectedDate}_${time}_Court${court}`;
+		  const slot = document.createElement('div');
+		  slot.className = 'slot';
+		  slot.textContent = time;
+
+		  const now = DateTime.now().setZone(TZ);
+		  const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
+
+		  // 🚫 Skip if today and time is in the past (with 15-minute buffer)
+		  const isToday = selectedDate === now.toISODate();
+		  const isPast = slotDateTime <= now.plus({ minutes: 15 });
+
+		  if (bookedSlots.has(key)) {
+			slot.classList.add('booked');
+			column.appendChild(slot); // ✅ Always show reserved slots
+		  } else if (!(isToday && isPast)) {
+			slot.onclick = () => openForm(key);
+			column.appendChild(slot); // ✅ Show only if it's not past
+		  }
+		});
+
         bookingGrid.appendChild(column);
       });
     }
