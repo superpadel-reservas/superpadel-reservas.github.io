@@ -141,25 +141,28 @@
     }
 
     window.submitBooking = async function () {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const slot = document.getElementById("formContainer").dataset.slot;
-      if (!name || !phone) return alert("Please enter name and phone.");
+	  const name = document.getElementById("name").value.trim();
+	  const phone = document.getElementById("phone").value.trim();
+	  const slot = document.getElementById("formContainer").dataset.slot;
+	  if (!name || !phone) return alert("Please enter name and phone.");
 
-      const [time, court] = slot.split(" - Court ");
-      await push(ref(db, 'bookings/'), {
-        timestamp: new Date().toISOString(),
-        time,
-        court,
-        name,
-        phone
-      });
+	  const [time, court] = slot.split(" - Court ");
+	  const date = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
 
-      alert(`Booking confirmed for ${slot}`);
-      document.getElementById("formContainer").style.display = "none";
-      bookedSlots.add(slot);
-      buildGrid();
-    };
+	  // Store in the nested structure: bookings/date/courtX/time/
+	  const bookingRef = ref(db, `bookings/${date}/court${court}/${time}`);
+
+	  await set(bookingRef, {
+		name,
+		phone
+	  });
+
+	  alert(`Booking confirmed for ${slot}`);
+	  document.getElementById("formContainer").style.display = "none";
+	  bookedSlots.add(slot);
+	  buildGrid();
+	};
+
 
     onValue(ref(db, 'bookings/'), snapshot => {
       bookedSlots.clear();
