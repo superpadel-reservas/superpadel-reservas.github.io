@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SuperPadel Booking</title>
+  <title>Super Padel Zamora</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -123,35 +123,35 @@
   <!-- Booking Form -->
   <div id="formContainer">
     <div class="formBox">
-  	<h3>Book Slot</h3>
-  	<input type="text" id="name" placeholder="Your name" />
-  	<input type="text" id="phone" placeholder="Phone number" />
-  	<button onclick="submitBooking()">Book</button>
-  	<button onclick="showCategoryModal()">LEAGUE GAME</button>
-  	<button class="cancel-button" onclick="closeAllModals()">Cancel</button>
+  	<h3>Reserva un Horario</h3>
+  	<input type="text" id="name" placeholder="Nombre de la Reserva" />
+  	<input type="text" id="phone" placeholder="Numero de Telefono" />
+  	<button onclick="submitBooking()">RESERVAR</button>
+  	<button onclick="showCategoryModal()">JUEGO DE LIGA</button>
+  	<button class="cancel-button" onclick="closeAllModals()">Salir</button>
     </div>
   </div>
 
   <!-- Category Modal -->
   <div id="categoryModal">
     <div class="formBox">
-      <h3>Select Category</h3>
+      <h3>Selecciona la Categoria</h3>
       <button onclick="selectCategory('4A')">4ta Grupo A</button>
       <button onclick="selectCategory('4B')">4ta Grupo B</button>
       <button onclick="selectCategory('5A')">5ta Grupo A</button>
       <button onclick="selectCategory('5B')">5ta Grupo B</button>
       <button onclick="selectCategory('Mixed')">Mixta</button>
-      <button class="cancel-button" onclick="closeAllModals()">Cancel</button>
+      <button class="cancel-button" onclick="closeAllModals()">Cancelar</button>
     </div>
   </div>
 
   <!-- Players Modal -->
   <div id="playersModal">
     <div class="formBox">
-      <h3>Select 2 Teams</h3>
+      <h3>Selecciona las 2 Parejas</h3>
       <div id="playersList"></div>
-      <button id="leagueFinishButton" onclick="finishLeagueBooking()" style="display:none;">Finish</button>
-      <button class="cancel-button" onclick="closeAllModals()">Cancel</button>
+      <button id="leagueFinishButton" onclick="finishLeagueBooking()" style="display:none;">RESERVAR</button>
+      <button class="cancel-button" onclick="closeAllModals()">Cancelar</button>
     </div>
   </div>
 
@@ -213,7 +213,7 @@
         column.className = 'court-column';
         const title = document.createElement('div');
         title.className = 'court-title';
-        title.textContent = `Court ${court}`;
+        title.textContent = `Cancha ${court}`;
         column.appendChild(title);
         times.forEach(time => {
           const key = `${selectedDate}_${time}_Court${court}`;
@@ -246,9 +246,9 @@
     window.submitBooking = async function () {
       const name = document.getElementById('name').value.trim();
       const phone = document.getElementById('phone').value.trim();
-      if (!name || !phone || !currentSlot) return alert('Please fill all fields.');
+      if (!name || !phone || !currentSlot) return alert('Por Favor llena el nombre y un numero de telefono.');
       const [date, time, courtPart] = currentSlot.split('_');
-      const court = courtPart.replace('Court', '');
+      const court = courtPart.replace('Cancha', '');
       await push(ref(db, 'bookings/'), {
         timestamp: DateTime.now().setZone(TZ).toISO(),
         name,
@@ -258,7 +258,7 @@
         court,
         type: 'regular'
       });
-      alert(`Booking confirmed for Court ${court} at ${time} on ${date}`);
+      alert(`Reserva Completada Cancha ${court} ${time} ${date}`);
       bookedSlots.add(currentSlot);
       document.getElementById('formContainer').style.display = 'none';
       buildGrid();
@@ -299,9 +299,9 @@
     }
 
     window.finishLeagueBooking = async function () {
-      if (selectedTeams.length !== 2 || !currentSlot) return alert('Please select 2 teams.');
+      if (selectedTeams.length !== 2 || !currentSlot) return alert('Por Favor Selecciona las 2 parejas que jugaran.');
       const [date, time, courtPart] = currentSlot.split('_');
-      const court = courtPart.replace('Court', '');
+      const court = courtPart.replace('Cancha', '');
       await push(ref(db, 'bookings/'), {
         timestamp: DateTime.now().setZone(TZ).toISO(),
         name: 'LEAGUE GAME',
@@ -312,7 +312,7 @@
         court,
         type: 'league'
       });
-      alert(`LEAGUE GAME booked: ${selectedTeams[0]} vs ${selectedTeams[1]}`);
+      alert(`JUEGO DE LIGA listo! ${selectedTeams[0]} vs ${selectedTeams[1]}`);
       bookedSlots.add(currentSlot);
       document.getElementById('playersModal').style.display = 'none';
       document.getElementById('formContainer').style.display = 'none';
