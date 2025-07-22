@@ -111,24 +111,6 @@
 	  width: 100%;
 	  margin-top: 10px;
 	}
-	#adminLogin {
-	  position: fixed;
-	  bottom: 20px;
-	  right: 20px;
-	  padding: 10px;
-	  background: #1a73e8;
-	  color: white;
-	  border-radius: 6px;
-	  cursor: pointer;
-	  z-index: 1000;
-	}
-	.cancel-res-btn {
-	  margin-top: 5px;
-	  background: red;
-	  color: white;
-	  width: 100%;
-	  font-size: 12px;
-	}
   </style>
 </head>
 <body>
@@ -137,7 +119,7 @@
     <input type="date" id="datePicker" />
   </div>
   <div class="grid" id="bookingGrid"></div>
-  <div id="adminLogin" onclick="adminLogin()">🔐 Admin</div>
+
   <!-- Booking Form -->
   <div id="formContainer">
     <div class="formBox">
@@ -176,7 +158,7 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getDatabase, ref, push, onValue, get, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+    import { getDatabase, ref, push, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
     const { DateTime } = luxon;
     const TZ = 'America/Mexico_City';
@@ -197,7 +179,6 @@
     const bookingGrid = document.getElementById('bookingGrid');
     const datePicker = document.getElementById('datePicker');
     const bookedSlots = new Set();
-    const bookingsMap = new Map();
     const courts = [1, 2, 3];
     const times = [
       "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00",
@@ -212,28 +193,12 @@
     datePicker.max = maxDate;
     datePicker.addEventListener('change', buildGrid);
 
-    let isAdmin = false;
-
-    window.adminLogin = function() {
-      const pass = prompt("Contraseña de Admin:");
-      if (pass === "superpadel123") {
-        isAdmin = true;
-        alert("Modo Admin Activado");
-        buildGrid();
-      } else {
-        alert("Contraseña incorrecta.");
-      }
-    };
-
     onValue(ref(db, 'bookings/'), snapshot => {
       bookedSlots.clear();
-      bookingsMap.clear();
       const data = snapshot.val();
       if (data) {
-        Object.entries(data).forEach(([id, booking]) => {
-          const key = `${booking.date}_${booking.time}_Court${booking.court}`;
-          bookedSlots.add(key);
-          bookingsMap.set(key, { ...booking, id });
+        Object.values(data).forEach(({ date, time, court }) => {
+          bookedSlots.add(`${date}_${time}_Court${court}`);
         });
       }
       buildGrid();
@@ -251,33 +216,27 @@
         title.textContent = `Cancha ${court}`;
         column.appendChild(title);
         times.forEach(time => {
-          const key = `${selectedDate}_${time}_Court${court}`;
-          const slot = document.createElement('div');
-          slot.className = 'slot';
-          slot.textContent = time;
+		  const key = `${selectedDate}_${time}_Court${court}`;
+		  const slot = document.createElement('div');
+		  slot.className = 'slot';
+		  slot.textContent = time;
 
-          const now = DateTime.now().setZone(TZ);
-          const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
-          const isToday = selectedDate === now.toISODate();
-          const isPast = slotDateTime <= now.plus({ minutes: 15 });
+		  const now = DateTime.now().setZone(TZ);
+		  const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
 
-          if (bookedSlots.has(key)) {
-            slot.classList.add('booked');
-            if (isAdmin) {
-              const details = bookingsMap.get(key);
-              slot.textContent += `\n(${details.name || details.team1 + ' vs ' + details.team2})`;
-              const cancelBtn = document.createElement('button');
-              cancelBtn.textContent = 'Cancelar';
-              cancelBtn.className = 'cancel-res-btn';
-              cancelBtn.onclick = () => cancelBooking(details.id);
-              slot.appendChild(cancelBtn);
-            }
-            column.appendChild(slot); // ✅ Always show reserved slots
-          } else if (!(isToday && isPast)) {
-            slot.onclick = () => openForm(key);
-            column.appendChild(slot); // ✅ Show only if it's not past
-          }
-        });
+		  // 🚫 Skip if today and time is in the past (with 15-minute buffer)
+		  const isToday = selectedDate === now.toISODate();
+		  const isPast = slotDateTime <= now.plus({ minutes: 15 });
+
+		  if (bookedSlots.has(key)) {
+			slot.classList.add('booked');
+			column.appendChild(slot); // ✅ Always show reserved slots
+		  } else if (!(isToday && isPast)) {
+			slot.onclick = () => openForm(key);
+			column.appendChild(slot); // ✅ Show only if it's not past
+		  }
+		});
+
         bookingGrid.appendChild(column);
       });
     }
@@ -290,11 +249,6 @@
       selectedTeams = [];
       document.getElementById('formContainer').style.display = 'flex';
     }
-    window.cancelBooking = function(id) {
-      if (confirm("¿Estás seguro que quieres cancelar esta reserva?")) {
-        remove(ref(db, `bookings/${id}`));
-      }
-    };
 
     window.submitBooking = async function () {
       const name = document.getElementById('name').value.trim();
