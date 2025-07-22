@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora v.3</title>
+  <title>Super Padel Zamora v.4</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -217,6 +217,11 @@
         bottom: auto;
         right: 10px;
       }
+    }
+	.team-button.selected-team {
+      outline: 3px solid #333; /* Add a visible border */
+      font-weight: bold;
+      transform: scale(1.05);  /* Slight zoom for visual feedback */
     }
   </style>
 </head>
@@ -462,17 +467,23 @@
 	};
 
 
-    function toggleTeamSelection(button, player) {
-      const index = selectedTeams.indexOf(player);
-      if (index > -1) {
-        selectedTeams.splice(index, 1);
-        button.classList.remove('selected');
-      } else if (selectedTeams.length < 2) {
-        selectedTeams.push(player);
-        button.classList.add('selected');
-      }
-      document.getElementById('leagueFinishButton').style.display = selectedTeams.length === 2 ? 'inline-block' : 'none';
-    }
+    window.toggleTeamSelection = function (btn, teamName) {
+	  const index = selectedTeams.indexOf(teamName);
+
+	  if (index === -1) {
+		if (selectedTeams.length < 2) {
+		  selectedTeams.push(teamName);
+		  btn.classList.add('selected-team');
+		}
+	  } else {
+		selectedTeams.splice(index, 1);
+		btn.classList.remove('selected-team');
+	  }
+
+	  document.getElementById('leagueReserveBtn').style.display =
+		selectedTeams.length === 2 ? 'block' : 'none';
+	};
+
 
     window.finishLeagueBooking = async function () {
       if (selectedTeams.length !== 2 || !currentSlot) return alert('Por Favor Selecciona las 2 parejas que jugaran.');
