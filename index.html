@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora</title>
+  <title>Super Padel Zamora v.1</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -132,7 +132,7 @@
   </style>
 </head>
 <body>
-  <h1>Super Padel Zamora</h1>
+  <h1>Super Padel Zamora v.1</h1>
   <div class="controls">
     <input type="date" id="datePicker" />
   </div>
@@ -267,7 +267,7 @@
 
 			  if (details.team1 && details.team2) {
 				// League Game
-				slot.innerHTML += `<br><strong style="color:#f39c12;">JUEGO DE LIGA:</strong> ${details.team1} vs ${details.team2}`;
+				slot.innerHTML += `<br><strong style="color:#f39c12;">JUEGO DE LIGA:</strong> \n ${details.team1} vs ${details.team2}`;
 			  } else {
 				// Normal Booking
 				slot.textContent += `\n(${details.name || ''} - ${details.phone || ''})`;
