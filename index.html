@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora v1.0</title>
+  <title>Super Padel Zamora v1.1</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -319,8 +319,12 @@
 
     let isAdmin = false;
 
-	window.adminLogin = async function() {
-	  const input = prompt("Contraseña de Admin:");
+	window.adminLogin = function() {
+	  document.getElementById('adminPasswordModal').style.display = 'flex';
+	};
+
+	window.verifyAdminPassword = async function () {
+	  const input = document.getElementById('adminPasswordInput').value;
 	  const snapshot = await get(ref(db, 'admin/password'));
 	  const actualPassword = snapshot.val();
 
@@ -329,10 +333,16 @@
 		alert("Modo Admin Activado");
 		datePicker.removeAttribute('max');
 		datePicker.removeAttribute('min');
+		closeAdminModal();
 		buildGrid();
 	  } else {
 		alert("Contraseña incorrecta.");
 	  }
+	};
+
+	window.closeAdminModal = function () {
+	  document.getElementById('adminPasswordModal').style.display = 'none';
+	  document.getElementById('adminPasswordInput').value = '';
 	};
 
 
@@ -530,5 +540,16 @@
 	  document.getElementById('playersModal').style.display = 'none';
 	};
   </script>
+  
+  <!-- Admin Password Modal -->
+	<div id="adminPasswordModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:2000;">
+	  <div class="formBox">
+		<h3>Ingresa la contraseña de Admin</h3>
+		<input type="password" id="adminPasswordInput" placeholder="Contraseña" class="modal-input" />
+		<button class="modal-button green" onclick="verifyAdminPassword()">Ingresar</button>
+		<button class="modal-button red" onclick="closeAdminModal()">Cancelar</button>
+	  </div>
+</div>
+
 </body>
 </html>
