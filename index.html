@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora v1.2</title>
+  <title>Super Padel Zamora v1.3</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -428,8 +428,7 @@
         return;
       }
     
-      const [court, date, hour] = slotKey.split('_');
-      const bookingRef = ref(db, `bookings/${court}/${date}/${hour}`);
+      const bookingRef = ref(db, `bookings/${slotKey}`);
     
       get(bookingRef).then(snapshot => {
         if (snapshot.exists()) {
@@ -440,9 +439,9 @@
             name: bookingData.name || "",
             team1: bookingData.team1 || "",
             team2: bookingData.team2 || "",
-            court: court,
-            date: date,
-            hour: hour,
+            court: bookingData.court || "",
+			date: bookingData.date || "",
+			hour: bookingData.time || "",
             timestamp: new Date().toISOString()
           };
     
