@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora v.2</title>
+  <title>Super Padel Zamora v.3</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -434,21 +434,33 @@
     };
 
     window.selectCategory = async function (category) {
-      document.getElementById('categoryModal').style.display = 'none';
-      const snapshot = await get(ref(db, `players/${category}`));
-      const players = snapshot.val();
-      const listDiv = document.getElementById('playersList');
-      listDiv.innerHTML = '';
-      selectedTeams = [];
-      if (!players) return;
-      Object.values(players).forEach(player => {
-        const btn = document.createElement('button');
-        btn.textContent = player;
-        btn.onclick = () => toggleTeamSelection(btn, player);
-        listDiv.appendChild(btn);
-      });
-      document.getElementById('playersModal').style.display = 'flex';
-    };
+	  document.getElementById('categoryModal').style.display = 'none';
+
+	  const snapshot = await get(ref(db, `players/${category}`));
+	  const players = snapshot.val();
+	  const listDiv = document.getElementById('playersList');
+	  listDiv.innerHTML = '';
+	  selectedTeams = [];
+
+	  if (!players) return;
+
+	  const color = players.color || '#e0e0e0'; // fallback color if not defined
+
+	  // Loop through all keys except 'color'
+	  Object.entries(players).forEach(([key, playerName]) => {
+		if (key === 'color') return; // skip color key
+		const btn = document.createElement('button');
+		btn.className = 'team-button';
+		btn.textContent = playerName;
+		btn.style.backgroundColor = color; // 🎨 apply the category color
+		btn.style.color = '#000'; // Ensure text is readable on pastel
+		btn.onclick = () => toggleTeamSelection(btn, playerName);
+		listDiv.appendChild(btn);
+	  });
+
+	  document.getElementById('playersModal').style.display = 'flex';
+	};
+
 
     function toggleTeamSelection(button, player) {
       const index = selectedTeams.indexOf(player);
