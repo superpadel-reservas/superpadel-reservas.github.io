@@ -229,6 +229,8 @@
       if (pass === "superpadel123") {
         isAdmin = true;
         alert("Modo Admin Activado");
+		datePicker.removeAttribute('max');
+		datePicker.removeAttribute('min');
         buildGrid();
       } else {
         alert("Contraseña incorrecta.");
