@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora v.3</title>
+  <title>Super Padel Zamora v.4</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -149,6 +149,49 @@
 	.section {
 	  margin: 20px 0;
 	}
+	.modal-content {
+	  background-color: #f9f9f9;
+	  margin: 8% auto;
+	  padding: 20px;
+	  border-radius: 12px;
+	  width: 90%;
+	  max-width: 400px;
+	  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	  text-align: center;
+	}
+	.modal-button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #e0e0e0;
+      transition: background-color 0.3s ease;
+    }
+    
+    .modal-button:hover {
+      background-color: #d0d0d0;
+    }
+    
+    .modal-button.green {
+      background-color: #4caf50;
+      color: white;
+    }
+    
+    .modal-button.green:hover {
+      background-color: #45a045;
+    }
+    
+    .modal-button.red {
+      background-color: #f44336;
+      color: white;
+    }
+    
+    .modal-button.red:hover {
+      background-color: #d7372b;
+    }
   </style>
 </head>
 <body>
@@ -163,21 +206,21 @@
   
   <!-- Booking Form -->
   <div id="formContainer">
-    <div class="formBox">
+    <div class="modal-content">
   	<h2>Reserva una Cancha en Super Padel Zamora</h2>
 	
 	<div class="section">
 		<h3>-- Reserva Normal --</h3>
 		<input type="text" id="name" placeholder="Nombre de la Reserva" class="modal-input" />
 		<input type="text" id="phone" placeholder="Numero de Telefono" class="modal-input" />
-		<button onclick="submitBooking()">RESERVAR</button>
+		<button onclick="submitBooking()" class="modal-button green" >RESERVAR</button>
 	</div>
 	
 	<div class="section">
 		<h3>-- Juego de Liga? --</h3>
-		<button onclick="showCategoryModal()">JUEGO DE LIGA</button>
+		<button onclick="showCategoryModal()" class="modal-button">JUEGO DE LIGA</button>
 	</div>  	
-  	<button class="cancel-button" onclick="closeAllModals()">Salir</button>
+  	<button class="cancel-button" onclick="closeAllModals()" class="modal-button red" >Salir</button>
     </div>
   </div>
 
