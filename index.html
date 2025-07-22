@@ -280,9 +280,9 @@
 
 
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { initializeApp, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getDatabase, ref, push, onValue, get, remove, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-
+	
     const { DateTime } = luxon;
     const TZ = 'America/Mexico_City';
 
@@ -319,18 +319,22 @@
 
     let isAdmin = false;
 
-    window.adminLogin = function() {
-      const pass = prompt("Contraseña de Admin:");
-      if (pass === "superpadel123") {
-        isAdmin = true;
-        alert("Modo Admin Activado");
+	window.adminLogin = async function() {
+	  const input = prompt("Contraseña de Admin:");
+	  const snapshot = await get(ref(db, 'admin/password'));
+	  const actualPassword = snapshot.val();
+
+	  if (input === actualPassword) {
+		isAdmin = true;
+		alert("Modo Admin Activado");
 		datePicker.removeAttribute('max');
 		datePicker.removeAttribute('min');
-        buildGrid();
-      } else {
-        alert("Contraseña incorrecta.");
-      }
-    };
+		buildGrid();
+	  } else {
+		alert("Contraseña incorrecta.");
+	  }
+	};
+
 
     onValue(ref(db, 'bookings/'), snapshot => {
       bookedSlots.clear();
