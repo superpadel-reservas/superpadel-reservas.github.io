@@ -74,6 +74,7 @@
       border-radius: 8px;
       width: 90%;
       max-width: 400px;
+      text-align: center;
     }
     .formBox input {
       width: 100%;
@@ -90,9 +91,21 @@
       border-radius: 4px;
       cursor: pointer;
       margin: 5px;
+      min-width: 120px; /* Ensures buttons align nicely */
     }
     .formBox button.selected {
       background-color: #4caf50;
+    }
+    
+    /* 🔽 Category-specific colors only override background */
+    .modal-button.cat-4ta {
+      background-color: #A9DFBF; /* Green pastel */
+    }
+    .modal-button.cat-5ta {
+      background-color: #F5B7B1; /* Red pastel */
+    }
+    .modal-button.cat-mixta {
+      background-color: #D7BDE2; /* Purple pastel */
     }
 	#playersList {
 	  display: grid;
@@ -192,18 +205,6 @@
     .modal-button.red:hover {
       background-color: #d7372b;
     }
-	.modal-button.mixta {
-      background-color: #D7BDE2;
-      color: white;
-    }
-	.modal-button.5ta {
-      background-color: #F5B7B1;
-      color: white;
-    }
-	.modal-button.4ta {
-      background-color: #A9DFBF;
-      color: white;
-    }
 	@media (max-width: 768px) {
       #adminLogin {
         top: 10px;
@@ -247,11 +248,11 @@
   <div id="categoryModal">
     <div class="formBox">
       <h3>Selecciona la Categoria</h3>
-      <button onclick="selectCategory('4A')" class="modal-button 4ta">4ta Grupo A</button>
-	  <button onclick="selectCategory('5A')" class="modal-button 5ta">5ta Grupo A</button>
-	  <button onclick="selectCategory('Mixed')" class="modal-button mixta">Mixta</button>
-      <button onclick="selectCategory('4B')" class="modal-button 4ta">4ta Grupo B</button>
-      <button onclick="selectCategory('5B')" class="modal-button 5ta">5ta Grupo B</button>
+      <button onclick="selectCategory('4A')" class="modal-button cat-4ta">4ta Grupo A</button>
+      <button onclick="selectCategory('5A')" class="modal-button cat-5ta">5ta Grupo A</button>
+      <button onclick="selectCategory('Mixed')" class="modal-button cat-mixta">Mixta</button>
+      <button onclick="selectCategory('4B')" class="modal-button cat-4ta">4ta Grupo B</button>
+      <button onclick="selectCategory('5B')" class="modal-button cat-5ta">5ta Grupo B</button>
       <button class="modal-button red" onclick="closeAllModals()">Cancelar</button>
     </div>
   </div>
