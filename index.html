@@ -263,14 +263,22 @@
           if (bookedSlots.has(key)) {
             slot.classList.add('booked');
             if (isAdmin) {
-              const details = bookingsMap.get(key);
-              slot.textContent += `\n(${details.name || details.team1 + ' vs ' + details.team2})`;
-              const cancelBtn = document.createElement('button');
-              cancelBtn.textContent = 'Cancelar';
-              cancelBtn.className = 'cancel-res-btn';
-              cancelBtn.onclick = () => cancelBooking(key);  // use slotKey directly
-              slot.appendChild(cancelBtn);
-            }
+			  const details = bookingsMap.get(key);
+
+			  if (details.team1 && details.team2) {
+				// League Game
+				slot.innerHTML += `<br><strong style="color:#f39c12;">JUEGO DE LIGA:</strong> ${details.team1} vs ${details.team2}`;
+			  } else {
+				// Normal Booking
+				slot.textContent += `\n(${details.name || ''} - ${details.phone || ''})`;
+			  }
+
+			  const cancelBtn = document.createElement('button');
+			  cancelBtn.textContent = 'Cancelar';
+			  cancelBtn.className = 'cancel-res-btn';
+			  cancelBtn.onclick = () => cancelBooking(key);
+			  slot.appendChild(cancelBtn);
+			}
             column.appendChild(slot); // ✅ Always show reserved slots
           } else if (!(isToday && isPast)) {
             slot.onclick = () => openForm(key);
