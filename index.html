@@ -243,7 +243,7 @@
 	<div class="section">
 		<h3>-- Reserva Normal --</h3>
 		<input type="text" id="name" placeholder="Nombre de la Reserva" class="modal-input" />
-		<input type="text" id="phone" placeholder="Numero de Telefono" class="modal-input" />
+		<input id="phone" type="text" maxlength="10" placeholder="Número de Teléfono" class="modal-input" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
 		<button onclick="submitBooking()" class="modal-button green" >RESERVAR</button>
 	</div>
 	
@@ -418,24 +418,37 @@
     window.submitBooking = async function () {
       const name = document.getElementById('name').value.trim();
       const phone = document.getElementById('phone').value.trim();
-      if (!name || !phone || !currentSlot) return alert('Por Favor llena el nombre y un numero de telefono.');
+    
+      // ✅ Validate fields
+      if (!name || !phone || !currentSlot) {
+        return alert('Por Favor llena el nombre y un numero de telefono.');
+      }
+    
+      // ✅ Validate phone: only digits, exactly 10 digits
+      const isValidPhone = /^\d{10}$/.test(phone);
+      if (!isValidPhone) {
+        return alert('Por favor ingresa un número de teléfono válido de 10 dígitos (México).');
+      }
+    
       const [date, time, courtPart] = currentSlot.split('_');
       const court = courtPart.replace('Cancha', '');
+    
       await set(ref(db, `bookings/${currentSlot}`), {
-	    timestamp: DateTime.now().setZone(TZ).toISO(),
-	    name,
-	    phone,
-	    date,
-	    time,
-	    court,
-	    type: 'regular'
-	  });
-
+        timestamp: DateTime.now().setZone(TZ).toISO(),
+        name,
+        phone,
+        date,
+        time,
+        court,
+        type: 'regular'
+      });
+    
       alert(`Reserva Completada Cancha ${court} ${time} ${date}`);
       bookedSlots.add(currentSlot);
       document.getElementById('formContainer').style.display = 'none';
       buildGrid();
     };
+
 
     window.showCategoryModal = function () {
       document.getElementById('formContainer').style.display = 'none';
