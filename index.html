@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora v.2</title>
+  <title>Super Padel Zamora v.3</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -137,6 +137,18 @@
       max-width: 250px;
       height: auto;
     }
+	.modal-input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+	.section {
+	  margin: 20px 0;
+	}
   </style>
 </head>
 <body>
@@ -148,14 +160,23 @@
   </div>
   <div class="grid" id="bookingGrid"></div>
   <div id="adminLogin" onclick="adminLogin()">🔐 Admin</div>
+  
   <!-- Booking Form -->
   <div id="formContainer">
     <div class="formBox">
-  	<h3>Reserva un Horario</h3>
-  	<input type="text" id="name" placeholder="Nombre de la Reserva" />
-  	<input type="text" id="phone" placeholder="Numero de Telefono" />
-  	<button onclick="submitBooking()">RESERVAR</button>
-  	<button onclick="showCategoryModal()">JUEGO DE LIGA</button>
+  	<h2>Reserva una Cancha en Super Padel Zamora</h2>
+	
+	<div class="section">
+		<h3>-- Reserva Normal --</h3>
+		<input type="text" id="name" placeholder="Nombre de la Reserva" class="modal-input" />
+		<input type="text" id="phone" placeholder="Numero de Telefono" class="modal-input" />
+		<button onclick="submitBooking()">RESERVAR</button>
+	</div>
+	
+	<div class="section">
+		<h3>-- Juego de Liga? --</h3>
+		<button onclick="showCategoryModal()">JUEGO DE LIGA</button>
+	</div>  	
   	<button class="cancel-button" onclick="closeAllModals()">Salir</button>
     </div>
   </div>
