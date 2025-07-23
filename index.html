@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora</title>
+  <title>Super Padel Zamora 1</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -332,6 +332,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getDatabase, ref, push, onValue, get, remove, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+	import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 	
     const { DateTime } = luxon;
     const TZ = 'America/Mexico_City';
@@ -348,6 +349,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+	const functions = getFunctions(app); 
 
     const bookingGrid = document.getElementById('bookingGrid');
     const datePicker = document.getElementById('datePicker');
@@ -373,22 +375,36 @@
 	  document.getElementById('adminPasswordModal').style.display = 'flex';
 	};
 
-	window.verifyAdminPassword = async function () {
-	  const input = document.getElementById('adminPasswordInput').value;
-	  const snapshot = await get(ref(db, 'admin/password'));
-	  const actualPassword = snapshot.val();
-
-	  if (input === actualPassword) {
-		isAdmin = true;
-		alert("Modo Admin Activado");
-		datePicker.removeAttribute('max');
-		datePicker.removeAttribute('min');
-		closeAdminModal();
-		buildGrid();
-	  } else {
-		alert("Contraseña incorrecta.");
-	  }
-	};
+	// DELETE the old verifyAdminPassword function and REPLACE it with this:
+    window.verifyAdminPassword = async function () {
+      const input = document.getElementById('adminPasswordInput').value;
+      if (!input) {
+        return alert("Por favor, ingresa una contraseña.");
+      }
+    
+      // Create a reference to the Cloud Function
+      const verifyAdminCallable = httpsCallable(functions, 'verifyAdmin');
+    
+      try {
+        // Call the function and pass the password as an argument
+        const result = await verifyAdminCallable({ password: input });
+    
+        // The function returns { success: true } or { success: false }
+        if (result.data.success) {
+          isAdmin = true;
+          alert("Modo Admin Activado");
+          datePicker.removeAttribute('max');
+          datePicker.removeAttribute('min');
+          closeAdminModal();
+          buildGrid();
+        } else {
+          alert("Contraseña incorrecta.");
+        }
+      } catch (error) {
+        console.error("Error calling verifyAdmin function:", error);
+        alert("Ocurrió un error al verificar la contraseña. Inténtalo de nuevo.");
+      }
+    };
 
 	window.closeAdminModal = function () {
 	  document.getElementById('adminPasswordModal').style.display = 'none';
