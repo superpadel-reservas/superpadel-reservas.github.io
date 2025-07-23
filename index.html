@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora 1</title>
+  <title>Super Padel Zamora 2</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -662,7 +662,7 @@
         <p><strong>Equipos:</strong> ${teams}</p>
         <p><strong>Fecha:</strong> ${bookingData.date}</p>
         <p><strong>Hora:</strong> ${bookingData.time}</p>
-        ${bookingData.phone ? `<p><strong>Teléfono:</strong> ${bookingData.phone}</p>` : ''}
+        ${bookingData.phone ? "<p><strong>Teléfono:</strong> " + bookingData.phone + "</p>" : ''}
       `;
     
       modal.classList.remove('hidden');
