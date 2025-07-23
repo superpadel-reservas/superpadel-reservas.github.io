@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora 1</title>
+  <title>Super Padel Zamora</title>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <style>
     body {
@@ -653,8 +653,8 @@
       const modal = document.getElementById('confirmationModal');
       const detailsDiv = document.getElementById('confirmationDetails');
 	  
-	  // Convert string to Date object
-	  const bookingDate = new Date(bookingData.date);
+	  const [year, month, day] = bookingData.date.split('-').map(Number);
+	  const bookingDate = new Date(year, month - 1, day);
 	  
 	  // Get weekday name in Spanish (e.g., "miércoles")
 	  const dayOfWeek = bookingDate.toLocaleDateString('es-MX', { weekday: 'long' });
@@ -669,7 +669,7 @@
 	  const year = bookingDate.getFullYear();
 	  
 	  // Final formatted string
-	  const formattedDate = `${capitalizedDay} ${day}-${capitalizedMonth}-${year}`;
+	  const formattedDate = `${capitalizedDay} ${day} de ${capitalizedMonth} ${year}`;
 	  
       let teams = bookingData.team1 && bookingData.team2
         ? `<strong>${bookingData.team1}</strong> vs <strong>${bookingData.team2}</strong>`
