@@ -653,8 +653,8 @@
       const modal = document.getElementById('confirmationModal');
       const detailsDiv = document.getElementById('confirmationDetails');
 	  
-	  const [year, month, day] = bookingData.date.split('-').map(Number);
-	  const bookingDate = new Date(year, month - 1, day);
+	  const [year, month, dayOriginal] = bookingData.date.split('-').map(Number);
+	  const bookingDate = new Date(year, month - 1, dayOriginal);
 	  
 	  // Get weekday name in Spanish (e.g., "miércoles")
 	  const dayOfWeek = bookingDate.toLocaleDateString('es-MX', { weekday: 'long' });
