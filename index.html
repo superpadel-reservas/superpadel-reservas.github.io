@@ -378,6 +378,9 @@
 	// DELETE the old verifyAdminPassword function and REPLACE it with this:
     window.verifyAdminPassword = async function () {
       const input = document.getElementById('adminPasswordInput').value;
+	  
+	  alert("The password being sent is: '" + input + "'");
+	  
       if (!input) {
         return alert("Por favor, ingresa una contraseña.");
       }
