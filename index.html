@@ -332,11 +332,11 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getDatabase, ref, push, onValue, get, remove, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-	import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
-	
+    import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
+    
     const { DateTime } = luxon;
     const TZ = 'America/Mexico_City';
-
+    
     const firebaseConfig = {
       apiKey: "AIzaSyBOq0oFBM791lCs9th8wkVTGSHvLR1k_Hc",
       authDomain: "reservas-superpadel.firebaseapp.com",
@@ -346,11 +346,11 @@
       messagingSenderId: "736124396684",
       appId: "1:736124396684:web:c0f3921a2b1ba354bcc7a9"
     };
-
+    
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-	const functions = getFunctions(app); 
-
+    const functions = getFunctions(app);
+    
     const bookingGrid = document.getElementById('bookingGrid');
     const datePicker = document.getElementById('datePicker');
     const bookedSlots = new Set();
@@ -361,38 +361,32 @@
       "14:00", "15:00", "16:00", "17:00", "18:00", "19:00",
       "20:00", "21:00", "22:00", "23:00"
     ];
-
+    
     const todayMX = DateTime.now().setZone(TZ);
     datePicker.value = todayMX.toISODate();
     const maxDate = todayMX.plus({ days: 7 }).toISODate();
     datePicker.min = todayMX.toISODate();
     datePicker.max = maxDate;
     datePicker.addEventListener('change', buildGrid);
-
+    
     let isAdmin = false;
-
-	window.adminLogin = function() {
-	  document.getElementById('adminPasswordModal').style.display = 'flex';
-	};
-
-	// DELETE the old verifyAdminPassword function and REPLACE it with this:
+    
+    window.adminLogin = function() {
+      document.getElementById('adminPasswordModal').style.display = 'flex';
+    };
+    
     window.verifyAdminPassword = async function () {
       const input = document.getElementById('adminPasswordInput').value;
-	  
-	  alert("The password being sent is: '" + input + "'");
-	  
+    
       if (!input) {
         return alert("Por favor, ingresa una contraseña.");
       }
     
-      // Create a reference to the Cloud Function
       const verifyAdminCallable = httpsCallable(functions, 'verifyAdmin');
     
       try {
-        // Call the function and pass the password as an argument
         const result = await verifyAdminCallable({ password: input });
     
-        // The function returns { success: true } or { success: false }
         if (result.data.success) {
           isAdmin = true;
           alert("Modo Admin Activado");
@@ -408,26 +402,25 @@
         alert("Ocurrió un error al verificar la contraseña. Inténtalo de nuevo.");
       }
     };
-
-	window.closeAdminModal = function () {
-	  document.getElementById('adminPasswordModal').style.display = 'none';
-	  document.getElementById('adminPasswordInput').value = '';
-	};
-
-
+    
+    window.closeAdminModal = function () {
+      document.getElementById('adminPasswordModal').style.display = 'none';
+      document.getElementById('adminPasswordInput').value = '';
+    };
+    
     onValue(ref(db, 'bookings/'), snapshot => {
       bookedSlots.clear();
       bookingsMap.clear();
       const data = snapshot.val();
       if (data) {
         Object.entries(data).forEach(([slotKey, booking]) => {
-		  bookedSlots.add(slotKey);
-		  bookingsMap.set(slotKey, { ...booking });
-		});
+          bookedSlots.add(slotKey);
+          bookingsMap.set(slotKey, { ...booking });
+        });
       }
       buildGrid();
     });
-
+    
     function buildGrid() {
       const selectedDate = datePicker.value;
       bookingGrid.innerHTML = '';
@@ -444,51 +437,49 @@
           const slot = document.createElement('div');
           slot.className = 'slot';
           slot.textContent = time;
-
+    
           const now = DateTime.now().setZone(TZ);
           const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
           const isToday = selectedDate === now.toISODate();
           const isPast = slotDateTime <= now.plus({ minutes: 15 });
-
+    
           if (bookedSlots.has(key)) {
             slot.classList.add('booked');
             if (isAdmin) {
-			  const details = bookingsMap.get(key);
-
-			  if (details.team1 && details.team2) {
-				// League Game
-				slot.innerHTML += `<br><strong style="color:#f39c12;">JUEGO DE LIGA:</strong> <br> ${details.team1} vs ${details.team2}`;
-			  } else {
-				// Normal Booking
-				slot.innerHTML += `<br>(${details.name || ''} - ${details.phone || ''})`;
-			  }
-
-			  const cancelBtn = document.createElement('button');
-			  cancelBtn.textContent = 'Cancelar';
-			  cancelBtn.className = 'cancel-res-btn';
-			  cancelBtn.onclick = () => cancelBooking(key);
-			  slot.appendChild(cancelBtn);
-			}
-            column.appendChild(slot); // ✅ Always show reserved slots
+              const details = bookingsMap.get(key);
+    
+              if (details.team1 && details.team2) {
+                slot.innerHTML += `<br><strong style="color:#f39c12;">JUEGO DE LIGA:</strong> <br> ${details.team1} vs ${details.team2}`;
+              } else {
+                slot.innerHTML += `<br>(${details.name || ''} - ${details.phone || ''})`;
+              }
+    
+              const cancelBtn = document.createElement('button');
+              cancelBtn.textContent = 'Cancelar';
+              cancelBtn.className = 'cancel-res-btn';
+              cancelBtn.onclick = () => cancelBooking(key);
+              slot.appendChild(cancelBtn);
+            }
+            column.appendChild(slot);
           } else if (!(isToday && isPast)) {
             slot.onclick = () => openForm(key);
-            column.appendChild(slot); // ✅ Show only if it's not past
+            column.appendChild(slot);
           }
         });
         bookingGrid.appendChild(column);
       });
     }
-
+    
     let currentSlot = null;
     let selectedTeams = [];
-
+    
     function openForm(slotKey) {
       currentSlot = slotKey;
       selectedTeams = [];
       document.getElementById('formContainer').style.display = 'flex';
     }
     
-	window.cancelBooking = function(slotKey) {
+    window.cancelBooking = function(slotKey) {
       if (!isAdmin) return;
     
       const reason = prompt("¿Por qué estás cancelando esta reserva?");
@@ -509,20 +500,19 @@
             team1: bookingData.team1 || "",
             team2: bookingData.team2 || "",
             court: bookingData.court || "",
-			date: bookingData.date || "",
-			hour: bookingData.time || "",
+            date: bookingData.date || "",
+            hour: bookingData.time || "",
             timestamp: new Date().toISOString()
           };
     
-          // Store cancellation entry
           const newCancelRef = push(ref(db, 'cancellations'));
           set(newCancelRef, cancellationData)
             .then(() => {
-              return remove(bookingRef); // Delete original booking
+              return remove(bookingRef);
             })
             .then(() => {
               alert("Reserva cancelada exitosamente.");
-              buildGrid(); // Refresh view
+              buildGrid();
             })
             .catch(error => {
               console.error("Error al cancelar la reserva:", error);
@@ -533,19 +523,15 @@
         }
       });
     };
-
-
-
+    
     window.submitBooking = async function () {
       const name = document.getElementById('name').value.trim();
       const phone = document.getElementById('phone').value.trim();
     
-      // ✅ Validate fields
       if (!name || !phone || !currentSlot) {
         return alert('Por Favor llena el nombre y un numero de telefono.');
       }
     
-      // ✅ Validate phone: only digits, exactly 10 digits
       const isValidPhone = /^\d{10}$/.test(phone);
       if (!isValidPhone) {
         return alert('Por favor ingresa un número de teléfono válido de 10 dígitos (México).');
@@ -554,7 +540,7 @@
       const [date, time, courtPart] = currentSlot.split('_');
       const court = courtPart.replace('Cancha', '');
     
-      await set(ref(db, `bookings/${currentSlot}`), {
+      const bookingData = {
         timestamp: DateTime.now().setZone(TZ).toISO(),
         name,
         phone,
@@ -562,164 +548,141 @@
         time,
         court,
         type: 'regular'
-      });
-	  const bookingData = {
-		timestamp: DateTime.now().setZone(TZ).toISO(),
-		name,
-		phone,
-		date,
-		time,
-		court,
-		type: 'regular'
-	  };
-      showConfirmationModal(bookingData); // Show detailed confirmation modal
+      };
+    
+      await set(ref(db, `bookings/${currentSlot}`), bookingData);
+      showConfirmationModal(bookingData);
       bookedSlots.add(currentSlot);
       document.getElementById('formContainer').style.display = 'none';
       buildGrid();
     };
-
+    
     window.showCategoryModal = function () {
       document.getElementById('formContainer').style.display = 'none';
       document.getElementById('categoryModal').style.display = 'flex';
     };
-
+    
     window.selectCategory = async function (category) {
-	  document.getElementById('categoryModal').style.display = 'none';
-
-	  const snapshot = await get(ref(db, `players/${category}`));
-	  const players = snapshot.val();
-	  const listDiv = document.getElementById('playersList');
-	  listDiv.innerHTML = '';
-	  selectedTeams = [];
-
-	  if (!players) return;
-
-	  const color = players.color || '#e0e0e0'; // fallback color if not defined
-
-	  // Loop through all keys except 'color'
-	  Object.entries(players).forEach(([key, playerName]) => {
-		if (key === 'color') return; // skip color key
-		const btn = document.createElement('button');
-		btn.className = 'team-button';
-		btn.textContent = playerName;
-		btn.style.backgroundColor = color; // 🎨 apply the category color
-		btn.style.color = '#000'; // Ensure text is readable on pastel
-		btn.onclick = () => toggleTeamSelection(btn, playerName);
-		listDiv.appendChild(btn);
-	  });
-
-	  document.getElementById('playersModal').style.display = 'flex';
-	};
-
-
+      document.getElementById('categoryModal').style.display = 'none';
+    
+      const snapshot = await get(ref(db, `players/${category}`));
+      const players = snapshot.val();
+      const listDiv = document.getElementById('playersList');
+      listDiv.innerHTML = '';
+      selectedTeams = [];
+    
+      if (!players) return;
+    
+      const color = players.color || '#e0e0e0';
+    
+      Object.entries(players).forEach(([key, playerName]) => {
+        if (key === 'color') return;
+        const btn = document.createElement('button');
+        btn.className = 'team-button';
+        btn.textContent = playerName;
+        btn.style.backgroundColor = color;
+        btn.style.color = '#000';
+        btn.onclick = () => toggleTeamSelection(btn, playerName);
+        listDiv.appendChild(btn);
+      });
+    
+      document.getElementById('playersModal').style.display = 'flex';
+    };
+    
     window.toggleTeamSelection = function (btn, teamName) {
-	  const index = selectedTeams.indexOf(teamName);
-
-	  if (index === -1) {
-		if (selectedTeams.length < 2) {
-		  selectedTeams.push(teamName);
-		  btn.classList.add('selected-team');
-		}
-	  } else {
-		selectedTeams.splice(index, 1);
-		btn.classList.remove('selected-team');
-	  }
-
-	  document.getElementById('leagueFinishButton').style.display =
-		selectedTeams.length === 2 ? 'block' : 'none';
-	};
-
-
+      const index = selectedTeams.indexOf(teamName);
+    
+      if (index === -1) {
+        if (selectedTeams.length < 2) {
+          selectedTeams.push(teamName);
+          btn.classList.add('selected-team');
+        }
+      } else {
+        selectedTeams.splice(index, 1);
+        btn.classList.remove('selected-team');
+      }
+    
+      document.getElementById('leagueFinishButton').style.display =
+        selectedTeams.length === 2 ? 'block' : 'none';
+    };
+    
     window.finishLeagueBooking = async function () {
       if (selectedTeams.length !== 2 || !currentSlot) return alert('Por Favor Selecciona las 2 parejas que jugaran.');
       const [date, time, courtPart] = currentSlot.split('_');
       const court = courtPart.replace('Cancha', '');
-      await set(ref(db, `bookings/${currentSlot}`), {
-	    timestamp: DateTime.now().setZone(TZ).toISO(),
-	    name: 'LEAGUE GAME',
-	    team1: selectedTeams[0],
-	    team2: selectedTeams[1],
-	    date,
-	    time,
-	    court,
-	    type: 'league'
-	  });
-
+    
       const bookingData = {
-		timestamp: DateTime.now().setZone(TZ).toISO(),
-		name,
-		team1: selectedTeams[0],
-	    team2: selectedTeams[1],
-		date,
-		time,
-		court,
-		type: 'league'
-	  };
-	  showConfirmationModal(bookingData); // Show detailed confirmation modal
+        timestamp: DateTime.now().setZone(TZ).toISO(),
+        name: 'JUEGO DE LIGA',
+        team1: selectedTeams[0],
+        team2: selectedTeams[1],
+        date,
+        time,
+        court,
+        type: 'league'
+      };
+    
+      await set(ref(db, `bookings/${currentSlot}`), bookingData);
+      showConfirmationModal(bookingData);
       bookedSlots.add(currentSlot);
       document.getElementById('playersModal').style.display = 'none';
       document.getElementById('formContainer').style.display = 'none';
       buildGrid();
     };
-	
-	window.closeAllModals = function () {
-	  document.getElementById('formContainer').style.display = 'none';
-	  document.getElementById('categoryModal').style.display = 'none';
-	  document.getElementById('playersModal').style.display = 'none';
-	};
-	
-	function showConfirmationModal(bookingData) {
-		const modal = document.getElementById('confirmationModal');
-		const detailsDiv = document.getElementById('confirmationDetails');
-		
-		const [yearOriginal, monthOriginal, dayOriginal] = bookingData.date.split('-').map(Number);
-		const bookingDate = new Date(yearOriginal, monthOriginal - 1, dayOriginal);
-		
-		// Get weekday name in Spanish (e.g., "miércoles")
-		const dayOfWeek = bookingDate.toLocaleDateString('es-MX', { weekday: 'long' });
-		
-		// Capitalize the first letter
-		const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-		
-		// Get day, month name in Spanish, and year
-		const day = bookingDate.getDate();
-		const monthName = bookingDate.toLocaleDateString('es-MX', { month: 'long' });
-		const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-		const year = bookingDate.getFullYear();
-		
-		// Final formatted string
-		const formattedDate = `${capitalizedDay} ${day} de ${capitalizedMonth} ${year}`;
-		
-		let detailsHTML = '';
-
-		if (bookingData.type === 'league') {
-			detailsHTML = `
-				<h3>JUEGO DE LIGA</h3>
-				<p><strong>${bookingData.team1}</strong> vs <strong>${bookingData.team2}</strong></p>
-				<p><strong>Fecha:</strong> ${formattedDate}</p>
-				<p><strong>Hora:</strong> ${bookingData.time}</p>
-			`;
-		} else { // 'regular' booking
-			detailsHTML = `
-				<h3>RESERVA NORMAL</h3>
-				<p><strong>Nombre:</strong> ${bookingData.name}</p>
-				<p><strong>Fecha:</strong> ${formattedDate}</p>
-				<p><strong>Hora:</strong> ${bookingData.time}</p>
-				<p><strong>Teléfono:</strong> ${bookingData.phone}</p>
-			`;
-		}
-	
-		detailsDiv.innerHTML = detailsHTML + `
-			<br><br>
-			Esta es tu confirmacion cuando llegues al club! <br><strong> ¡Toma una Captura de Pantalla! </strong>
-		`;
-	
-		modal.classList.remove('hidden');
-	}
+    
+    window.closeAllModals = function () {
+      document.getElementById('formContainer').style.display = 'none';
+      document.getElementById('categoryModal').style.display = 'none';
+      document.getElementById('playersModal').style.display = 'none';
+    };
+    
+    function showConfirmationModal(bookingData) {
+      const modal = document.getElementById('confirmationModal');
+      const detailsDiv = document.getElementById('confirmationDetails');
+    
+      const [yearOriginal, monthOriginal, dayOriginal] = bookingData.date.split('-').map(Number);
+      const bookingDate = new Date(yearOriginal, monthOriginal - 1, dayOriginal);
+    
+      const dayOfWeek = bookingDate.toLocaleDateString('es-MX', { weekday: 'long' });
+      const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+    
+      const day = bookingDate.getDate();
+      const monthName = bookingDate.toLocaleDateString('es-MX', { month: 'long' });
+      const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      const year = bookingDate.getFullYear();
+    
+      const formattedDate = `${capitalizedDay} ${day} de ${capitalizedMonth} ${year}`;
+    
+      let detailsHTML = '';
+    
+      if (bookingData.type === 'league') {
+        detailsHTML = `
+          <h3>JUEGO DE LIGA</h3>
+          <p><strong>${bookingData.team1}</strong> vs <strong>${bookingData.team2}</strong></p>
+          <p><strong>Fecha:</strong> ${formattedDate}</p>
+          <p><strong>Hora:</strong> ${bookingData.time}</p>
+        `;
+      } else {
+        detailsHTML = `
+          <h3>RESERVA NORMAL</h3>
+          <p><strong>Nombre:</strong> ${bookingData.name}</p>
+          <p><strong>Fecha:</strong> ${formattedDate}</p>
+          <p><strong>Hora:</strong> ${bookingData.time}</p>
+          <p><strong>Teléfono:</strong> ${bookingData.phone}</p>
+        `;
+      }
+    
+      detailsDiv.innerHTML = detailsHTML + `
+        <br><br>
+        Esta es tu confirmacion cuando llegues al club! <br><strong> ¡Toma una Captura de Pantalla! </strong>
+      `;
+    
+      modal.classList.remove('hidden');
+    }
     
     window.closeConfirmation = function () {
-		document.getElementById('confirmationModal').classList.add('hidden');
-	};
+      document.getElementById('confirmationModal').classList.add('hidden');
+    };
 	
   </script>
   
