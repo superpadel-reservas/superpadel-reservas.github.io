@@ -1,709 +1,729 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Super Padel Zamora 1</title>
-  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #1a73e8;
-    }
-    .controls {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .controls input {
-      padding: 10px;
-      font-size: 16px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      max-width: 1000px;
-      margin: auto;
-    }
-    .court-column {
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 10px;
-    }
-    .court-title {
-      text-align: center;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #1a73e8;
-    }
-    .slot {
-      background: #fff;
-      padding: 8px;
-      border-radius: 6px;
-      text-align: center;
-      border: 1px solid #ccc;
-      margin-bottom: 5px;
-      cursor: pointer;
-    }
-    .slot.booked {
-      background: #ddd;
-      color: #999;
-      cursor: not-allowed;
-    }
-    #formContainer,
-    #categoryModal,
-    #playersModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
-      justify-content: center;
-      align-items: center;
-    }
-    .formBox {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-    }
-    .formBox input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .formBox button {
-      padding: 10px 20px;
-      background: #1a73e8;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      margin: 5px;
-      min-width: 120px; /* Ensures buttons align nicely */
-    }
-    .formBox button.selected {
-      background-color: #4caf50;
-    }
-    
-    /* 🔽 Category-specific colors only override background */
-    .modal-button.cat-4taA {
-      background-color: #a4c2f4; /* Green pastel */
-    }
-	.modal-button.cat-4taB {
-      background-color: #b6d7a8; /* Green pastel */
-    }
-    .modal-button.cat-5taA {
-      background-color: #ea9999; /* Red pastel */
-    }
-	.modal-button.cat-5taB {
-      background-color: #f9cb9c; /* Red pastel */
-    }
-    .modal-button.cat-mixta {
-      background-color: #b4a7d6; /* Purple pastel */
-    }
-	#playersList {
-	  display: grid;
-	  grid-template-columns: repeat(2, 1fr);
-	  gap: 10px;
-	  margin-top: 10px;
-	  margin-bottom: 10px;
-	}
-	#leagueFinishButton {
-	  width: 100%;
-	  background: #4caf50;
-	}
-	.cancel-button {
-	  background-color: #ccc;
-	  color: black;
-	  width: 100%;
-	  margin-top: 10px;
-	}
-	#adminLogin {
-	  position: fixed;
-	  bottom: 20px;
-	  right: 20px;
-	  padding: 10px;
-	  background: #1a73e8;
-	  color: white;
-	  border-radius: 6px;
-	  cursor: pointer;
-	  z-index: 1000;
-	}
-	.cancel-res-btn {
-	  margin-top: 5px;
-	  background: red;
-	  color: white;
-	  width: 100%;
-	  font-size: 12px;
-	}
-	.logo-container {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .club-logo {
-      max-width: 250px;
-      height: auto;
-    }
-	.modal-input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-	.section {
-	  margin: 20px 0;
-	}
-	.modal-content {
-	  background-color: #f9f9f9;
-	  margin: 8% auto;
-	  padding: 20px;
-	  border-radius: 12px;
-	  width: 90%;
-	  max-width: 400px;
-	  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-	  text-align: center;
-	}
-	.modal-button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background-color: #e0e0e0;
-      transition: background-color 0.3s ease;
-    }
-    
-    .modal-button:hover {
-      background-color: #d0d0d0;
-    }
-    
-    .modal-button.green {
-      background-color: #4caf50;
-      color: white;
-    }
-    
-    .modal-button.green:hover {
-      background-color: #45a045;
-    }
-    
-    .modal-button.red {
-      background-color: #f44336;
-      color: white;
-    }
-    
-    .modal-button.red:hover {
-      background-color: #d7372b;
-    }
-	@media (max-width: 768px) {
-      #adminLogin {
-        top: 10px;
-        bottom: auto;
-        right: 10px;
-      }
-    }
-	.team-button.selected-team {
-      outline: 3px solid #333; /* Add a visible border */
-      font-weight: bold;
-      transform: scale(1.05);  /* Slight zoom for visual feedback */
-    }
-	
-	.modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    
-    .modal.hidden {
-      display: none;
-    }
-    
-    .modal-contentconfirmation {
-      background-color: white;
-      padding: 2em;
-      border-radius: 20px;
-      text-align: center;
-      max-width: 90%;
-      width: 400px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    
-    .confirmation-image {
-      width: 150px;
-      height: auto;
-      margin-bottom: 20px;
-    }
-    
-    .confirmation-details {
-      text-align: left;
-      margin: 1em 0;
-      font-size: 16px;
-    }
-    
-    .close-button {
-      padding: 10px 20px;
-      border: none;
-      background-color: #28a745;
-      color: white;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-  </style>
-</head>
-<body>
-  <div class="logo-container">
-	<img src="assets/logo.jpg" alt="Super Padel Zamora" class="club-logo">
-  </div>
-  <div class="controls">
-    <input type="date" id="datePicker" />
-  </div>
-  <div class="grid" id="bookingGrid"></div>
-  <div id="adminLogin" onclick="adminLogin()">🔐 Admin</div>
-  
-  <!-- Booking Form -->
-  <div id="formContainer">
-    <div class="modal-content">
-  	<h2>Reserva una Cancha en Super Padel Zamora</h2>
-	
-	<div class="section">
-		<h3>-- Reserva Normal --</h3>
-		<input type="text" id="name" placeholder="Nombre de la Reserva" class="modal-input" />
-		<input id="phone" type="text" maxlength="10" placeholder="Número de Teléfono" class="modal-input" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
-		<button onclick="submitBooking()" class="modal-button green" >RESERVAR</button>
-	</div>
-	
-	<div class="section">
-		<h3>-- Juego de Liga? --</h3>
-		<button onclick="showCategoryModal()" class="modal-button green">JUEGO DE LIGA</button>
-	</div>  	
-  	<button onclick="closeAllModals()" class="modal-button red" >Salir</button>
-    </div>
-  </div>
-
-  <!-- Category Modal -->
-  <div id="categoryModal">
-    <div class="formBox">
-      <h3>Selecciona la Categoria</h3>
-      <button onclick="selectCategory('4A')" class="modal-button cat-4taA">4ta Grupo A</button>
-      <button onclick="selectCategory('4B')" class="modal-button cat-4taB">4ta Grupo B</button>
-	  <button onclick="selectCategory('5A')" class="modal-button cat-5taA">5ta Grupo A</button>
-      <button onclick="selectCategory('5B')" class="modal-button cat-5taB">5ta Grupo B</button>
-	  <button onclick="selectCategory('Mixed')" class="modal-button cat-mixta">Mixta</button>
-      <button class="modal-button red" onclick="closeAllModals()">Cancelar</button>
-    </div>
-  </div>
-
-  <!-- Players Modal -->
-  <div id="playersModal">
-    <div class="formBox">
-      <h3>Selecciona las 2 Parejas</h3>
-      <div id="playersList"></div>
-      <button id="leagueFinishButton" onclick="finishLeagueBooking()" style="display:none;">RESERVAR</button>
-      <button class="modal-button red" onclick="closeAllModals()">Cancelar</button>
-    </div>
-  </div>
-
-
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getDatabase, ref, push, onValue, get, remove, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-    import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
-    
-    const { DateTime } = luxon;
-    const TZ = 'America/Mexico_City';
-    
-    const firebaseConfig = {
-      apiKey: "AIzaSyBOq0oFBM791lCs9th8wkVTGSHvLR1k_Hc",
-      authDomain: "reservas-superpadel.firebaseapp.com",
-      databaseURL: "https://reservas-superpadel-default-rtdb.firebaseio.com",
-      projectId: "reservas-superpadel",
-      storageBucket: "reservas-superpadel.appspot.com",
-      messagingSenderId: "736124396684",
-      appId: "1:736124396684:web:c0f3921a2b1ba354bcc7a9"
-    };
-    
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const functions = getFunctions(app);
-    
-    const bookingGrid = document.getElementById('bookingGrid');
-    const datePicker = document.getElementById('datePicker');
-    const bookedSlots = new Set();
-    const bookingsMap = new Map();
-    const courts = [1, 2, 3];
-    const times = [
-      "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00",
-      "14:00", "15:00", "16:00", "17:00", "18:00", "19:00",
-      "20:00", "21:00", "22:00", "23:00"
-    ];
-    
-    const todayMX = DateTime.now().setZone(TZ);
-    datePicker.value = todayMX.toISODate();
-    const maxDate = todayMX.plus({ days: 7 }).toISODate();
-    datePicker.min = todayMX.toISODate();
-    datePicker.max = maxDate;
-    datePicker.addEventListener('change', buildGrid);
-    
-    let isAdmin = false;
-    
-    window.adminLogin = function() {
-      document.getElementById('adminPasswordModal').style.display = 'flex';
-    };
-    
-    window.verifyAdminPassword = async function () {
-      const input = document.getElementById('adminPasswordInput').value;
-    
-      if (!input) {
-        return alert("Por favor, ingresa una contraseña.");
-      }
-    
-      const verifyAdminCallable = httpsCallable(functions, 'verifyAdmin');
-    
-      try {
-        const result = await verifyAdminCallable({ password: input });
-    
-        if (result.data.success) {
-          isAdmin = true;
-          alert("Modo Admin Activado");
-          datePicker.removeAttribute('max');
-          datePicker.removeAttribute('min');
-          closeAdminModal();
-          buildGrid();
-        } else {
-          alert("Contraseña incorrecta.");
-        }
-      } catch (error) {
-        console.error("Error calling verifyAdmin function:", error);
-        alert("Ocurrió un error al verificar la contraseña. Inténtalo de nuevo.");
-      }
-    };
-    
-    window.closeAdminModal = function () {
-      document.getElementById('adminPasswordModal').style.display = 'none';
-      document.getElementById('adminPasswordInput').value = '';
-    };
-    
-    onValue(ref(db, 'bookings/'), snapshot => {
-      bookedSlots.clear();
-      bookingsMap.clear();
-      const data = snapshot.val();
-      if (data) {
-        Object.entries(data).forEach(([slotKey, booking]) => {
-          bookedSlots.add(slotKey);
-          bookingsMap.set(slotKey, { ...booking });
-        });
-      }
-      buildGrid();
-    });
-    
-    function buildGrid() {
-      const selectedDate = datePicker.value;
-      bookingGrid.innerHTML = '';
-      if (!selectedDate) return;
-      courts.forEach(court => {
-        const column = document.createElement('div');
-        column.className = 'court-column';
-        const title = document.createElement('div');
-        title.className = 'court-title';
-        title.textContent = `Cancha ${court}`;
-        column.appendChild(title);
-        times.forEach(time => {
-          const key = `${selectedDate}_${time}_Court${court}`;
-          const slot = document.createElement('div');
-          slot.className = 'slot';
-          slot.textContent = time;
-    
-          const now = DateTime.now().setZone(TZ);
-          const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
-          const isToday = selectedDate === now.toISODate();
-          const isPast = slotDateTime <= now.plus({ minutes: 15 });
-    
-          if (bookedSlots.has(key)) {
-            slot.classList.add('booked');
-            if (isAdmin) {
-              const details = bookingsMap.get(key);
-    
-              if (details.team1 && details.team2) {
-                slot.innerHTML += `<br><strong style="color:#f39c12;">JUEGO DE LIGA:</strong> <br> ${details.team1} vs ${details.team2}`;
-              } else {
-                slot.innerHTML += `<br>(${details.name || ''} - ${details.phone || ''})`;
-              }
-    
-              const cancelBtn = document.createElement('button');
-              cancelBtn.textContent = 'Cancelar';
-              cancelBtn.className = 'cancel-res-btn';
-              cancelBtn.onclick = () => cancelBooking(key);
-              slot.appendChild(cancelBtn);
-            }
-            column.appendChild(slot);
-          } else if (!(isToday && isPast)) {
-            slot.onclick = () => openForm(key);
-            column.appendChild(slot);
-          }
-        });
-        bookingGrid.appendChild(column);
-      });
-    }
-    
-    let currentSlot = null;
-    let selectedTeams = [];
-    
-    function openForm(slotKey) {
-      currentSlot = slotKey;
-      selectedTeams = [];
-      document.getElementById('formContainer').style.display = 'flex';
-    }
-    
-    window.cancelBooking = function(slotKey) {
-      if (!isAdmin) return;
-    
-      const reason = prompt("¿Por qué estás cancelando esta reserva?");
-      if (!reason) {
-        alert("Cancelación abortada: Debes ingresar un motivo.");
-        return;
-      }
-    
-      const bookingRef = ref(db, `bookings/${slotKey}`);
-    
-      get(bookingRef).then(snapshot => {
-        if (snapshot.exists()) {
-          const bookingData = snapshot.val();
-    
-          const cancellationData = {
-            reason: reason,
-            name: bookingData.name || "",
-            team1: bookingData.team1 || "",
-            team2: bookingData.team2 || "",
-            court: bookingData.court || "",
-            date: bookingData.date || "",
-            hour: bookingData.time || "",
-            timestamp: new Date().toISOString()
-          };
-    
-          const newCancelRef = push(ref(db, 'cancellations'));
-          set(newCancelRef, cancellationData)
-            .then(() => {
-              return remove(bookingRef);
-            })
-            .then(() => {
-              alert("Reserva cancelada exitosamente.");
-              buildGrid();
-            })
-            .catch(error => {
-              console.error("Error al cancelar la reserva:", error);
-              alert("Ocurrió un error al cancelar la reserva.");
-            });
-        } else {
-          alert("No se encontró la reserva.");
-        }
-      });
-    };
-    
-    window.submitBooking = async function () {
-      const name = document.getElementById('name').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-    
-      if (!name || !phone || !currentSlot) {
-        return alert('Por Favor llena el nombre y un numero de telefono.');
-      }
-    
-      const isValidPhone = /^\d{10}$/.test(phone);
-      if (!isValidPhone) {
-        return alert('Por favor ingresa un número de teléfono válido de 10 dígitos (México).');
-      }
-    
-      const [date, time, courtPart] = currentSlot.split('_');
-      const court = courtPart.replace('Cancha', '');
-    
-      const bookingData = {
-        timestamp: DateTime.now().setZone(TZ).toISO(),
-        name,
-        phone,
-        date,
-        time,
-        court,
-        type: 'regular'
-      };
-    
-      await set(ref(db, `bookings/${currentSlot}`), bookingData);
-      showConfirmationModal(bookingData);
-      bookedSlots.add(currentSlot);
-      document.getElementById('formContainer').style.display = 'none';
-      buildGrid();
-    };
-    
-    window.showCategoryModal = function () {
-      document.getElementById('formContainer').style.display = 'none';
-      document.getElementById('categoryModal').style.display = 'flex';
-    };
-    
-    window.selectCategory = async function (category) {
-      document.getElementById('categoryModal').style.display = 'none';
-    
-      const snapshot = await get(ref(db, `players/${category}`));
-      const players = snapshot.val();
-      const listDiv = document.getElementById('playersList');
-      listDiv.innerHTML = '';
-      selectedTeams = [];
-    
-      if (!players) return;
-    
-      const color = players.color || '#e0e0e0';
-    
-      Object.entries(players).forEach(([key, playerName]) => {
-        if (key === 'color') return;
-        const btn = document.createElement('button');
-        btn.className = 'team-button';
-        btn.textContent = playerName;
-        btn.style.backgroundColor = color;
-        btn.style.color = '#000';
-        btn.onclick = () => toggleTeamSelection(btn, playerName);
-        listDiv.appendChild(btn);
-      });
-    
-      document.getElementById('playersModal').style.display = 'flex';
-    };
-    
-    window.toggleTeamSelection = function (btn, teamName) {
-      const index = selectedTeams.indexOf(teamName);
-    
-      if (index === -1) {
-        if (selectedTeams.length < 2) {
-          selectedTeams.push(teamName);
-          btn.classList.add('selected-team');
-        }
-      } else {
-        selectedTeams.splice(index, 1);
-        btn.classList.remove('selected-team');
-      }
-    
-      document.getElementById('leagueFinishButton').style.display =
-        selectedTeams.length === 2 ? 'block' : 'none';
-    };
-    
-    window.finishLeagueBooking = async function () {
-      if (selectedTeams.length !== 2 || !currentSlot) return alert('Por Favor Selecciona las 2 parejas que jugaran.');
-      const [date, time, courtPart] = currentSlot.split('_');
-      const court = courtPart.replace('Cancha', '');
-    
-      const bookingData = {
-        timestamp: DateTime.now().setZone(TZ).toISO(),
-        name: 'JUEGO DE LIGA',
-        team1: selectedTeams[0],
-        team2: selectedTeams[1],
-        date,
-        time,
-        court,
-        type: 'league'
-      };
-    
-      await set(ref(db, `bookings/${currentSlot}`), bookingData);
-      showConfirmationModal(bookingData);
-      bookedSlots.add(currentSlot);
-      document.getElementById('playersModal').style.display = 'none';
-      document.getElementById('formContainer').style.display = 'none';
-      buildGrid();
-    };
-    
-    window.closeAllModals = function () {
-      document.getElementById('formContainer').style.display = 'none';
-      document.getElementById('categoryModal').style.display = 'none';
-      document.getElementById('playersModal').style.display = 'none';
-    };
-    
-    function showConfirmationModal(bookingData) {
-      const modal = document.getElementById('confirmationModal');
+ <html lang="en">
+ <head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+   <title>Super Padel Zamora</title>
+   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+   <style>
+     body {
+       font-family: Arial, sans-serif;
+       background: #f4f4f4;
+       margin: 0;
+       padding: 20px;
+     }
+     h1 {
+       text-align: center;
+       color: #1a73e8;
+     }
+     .controls {
+       text-align: center;
+       margin-bottom: 20px;
+     }
+     .controls input {
+       padding: 10px;
+       font-size: 16px;
+     }
+     .grid {
+       display: grid;
+       grid-template-columns: repeat(3, 1fr);
+       gap: 10px;
+       max-width: 1000px;
+       margin: auto;
+     }
+     .court-column {
+       background: #fff;
+       border: 1px solid #ccc;
+       border-radius: 6px;
+       padding: 10px;
+     }
+     .court-title {
+       text-align: center;
+       font-weight: bold;
+       margin-bottom: 10px;
+       color: #1a73e8;
+     }
+     .slot {
+       background: #fff;
+       padding: 8px;
+       border-radius: 6px;
+       text-align: center;
+       border: 1px solid #ccc;
+       margin-bottom: 5px;
+       cursor: pointer;
+     }
+     .slot.booked {
+       background: #ddd;
+       color: #999;
+       cursor: not-allowed;
+     }
+     #formContainer,
+     #categoryModal,
+     #playersModal {
+       display: none;
+       position: fixed;
+       top: 0; left: 0;
+       width: 100vw; height: 100vh;
+       background: rgba(0, 0, 0, 0.6);
+       justify-content: center;
+       align-items: center;
+     }
+     .formBox {
+       background: white;
+       padding: 20px;
+       border-radius: 8px;
+       width: 90%;
+       max-width: 400px;
+       text-align: center;
+     }
+     .formBox input {
+       width: 100%;
+       padding: 10px;
+       margin: 10px 0;
+       border: 1px solid #ccc;
+       border-radius: 4px;
+     }
+     .formBox button {
+       padding: 10px 20px;
+       background: #1a73e8;
+       color: white;
+       border: none;
+       border-radius: 4px;
+       cursor: pointer;
+       margin: 5px;
+       min-width: 120px; /* Ensures buttons align nicely */
+     }
+     .formBox button.selected {
+       background-color: #4caf50;
+     }
+     
+     /* 🔽 Category-specific colors only override background */
+     .modal-button.cat-4taA {
+       background-color: #a4c2f4; /* Green pastel */
+     }
+ 	.modal-button.cat-4taB {
+       background-color: #b6d7a8; /* Green pastel */
+     }
+     .modal-button.cat-5taA {
+       background-color: #ea9999; /* Red pastel */
+     }
+ 	.modal-button.cat-5taB {
+       background-color: #f9cb9c; /* Red pastel */
+     }
+     .modal-button.cat-mixta {
+       background-color: #b4a7d6; /* Purple pastel */
+     }
+ 	#playersList {
+ 	  display: grid;
+ 	  grid-template-columns: repeat(2, 1fr);
+ 	  gap: 10px;
+ 	  margin-top: 10px;
+ 	  margin-bottom: 10px;
+ 	}
+ 	#leagueFinishButton {
+ 	  width: 100%;
+ 	  background: #4caf50;
+ 	}
+ 	.cancel-button {
+ 	  background-color: #ccc;
+ 	  color: black;
+ 	  width: 100%;
+ 	  margin-top: 10px;
+ 	}
+ 	#adminLogin {
+ 	  position: fixed;
+ 	  bottom: 20px;
+ 	  right: 20px;
+ 	  padding: 10px;
+ 	  background: #1a73e8;
+ 	  color: white;
+ 	  border-radius: 6px;
+ 	  cursor: pointer;
+ 	  z-index: 1000;
+ 	}
+ 	.cancel-res-btn {
+ 	  margin-top: 5px;
+ 	  background: red;
+ 	  color: white;
+ 	  width: 100%;
+ 	  font-size: 12px;
+ 	}
+ 	.logo-container {
+       text-align: center;
+       margin-bottom: 20px;
+     }
+     .club-logo {
+       max-width: 250px;
+       height: auto;
+     }
+ 	.modal-input {
+       width: 100%;
+       padding: 12px;
+       margin: 10px 0;
+       border-radius: 8px;
+       border: 1px solid #ccc;
+       font-size: 16px;
+       box-sizing: border-box;
+     }
+ 	.section {
+ 	  margin: 20px 0;
+ 	}
+ 	.modal-content {
+ 	  background-color: #f9f9f9;
+ 	  margin: 8% auto;
+ 	  padding: 20px;
+ 	  border-radius: 12px;
+ 	  width: 90%;
+ 	  max-width: 400px;
+ 	  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+ 	  text-align: center;
+ 	}
+ 	.modal-button {
+       width: 100%;
+       padding: 12px;
+       margin-top: 10px;
+       font-size: 16px;
+       border: none;
+       border-radius: 8px;
+       cursor: pointer;
+       background-color: #e0e0e0;
+       transition: background-color 0.3s ease;
+     }
+     
+     .modal-button:hover {
+       background-color: #d0d0d0;
+     }
+     
+     .modal-button.green {
+       background-color: #4caf50;
+       color: white;
+     }
+     
+     .modal-button.green:hover {
+       background-color: #45a045;
+     }
+     
+     .modal-button.red {
+       background-color: #f44336;
+       color: white;
+     }
+     
+     .modal-button.red:hover {
+       background-color: #d7372b;
+     }
+ 	@media (max-width: 768px) {
+       #adminLogin {
+         top: 10px;
+         bottom: auto;
+         right: 10px;
+       }
+     }
+ 	.team-button.selected-team {
+       outline: 3px solid #333; /* Add a visible border */
+       font-weight: bold;
+       transform: scale(1.05);  /* Slight zoom for visual feedback */
+     }
+ 	
+ 	.modal {
+       position: fixed;
+       top: 0;
+       left: 0;
+       width: 100%;
+       height: 100%;
+       background-color: rgba(0,0,0,0.7);
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       z-index: 9999;
+     }
+     
+     .modal.hidden {
+       display: none;
+     }
+     
+     .modal-contentconfirmation {
+       background-color: white;
+       padding: 2em;
+       border-radius: 20px;
+       text-align: center;
+       max-width: 90%;
+       width: 400px;
+       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+     }
+     
+     .confirmation-image {
+       width: 150px;
+       height: auto;
+       margin-bottom: 20px;
+     }
+     
+     .confirmation-details {
+       text-align: left;
+       margin: 1em 0;
+       font-size: 16px;
+     }
+     
+     .close-button {
+       padding: 10px 20px;
+       border: none;
+       background-color: #28a745;
+       color: white;
+       border-radius: 10px;
+       font-size: 16px;
+       cursor: pointer;
+     }
+ 
+   </style>
+ </head>
+ <body>
+   <div class="logo-container">
+ 	<img src="assets/logo.jpg" alt="Super Padel Zamora" class="club-logo">
+   </div>
+   <div class="controls">
+     <input type="date" id="datePicker" />
+   </div>
+   <div class="grid" id="bookingGrid"></div>
+   <div id="adminLogin" onclick="adminLogin()">🔐 Admin</div>
+   
+   <!-- Booking Form -->
+   <div id="formContainer">
+     <div class="modal-content">
+   	<h2>Reserva una Cancha en Super Padel Zamora</h2>
+ 	
+ 	<div class="section">
+ 		<h3>-- Reserva Normal --</h3>
+ 		<input type="text" id="name" placeholder="Nombre de la Reserva" class="modal-input" />
+ 		<input id="phone" type="text" maxlength="10" placeholder="Número de Teléfono" class="modal-input" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+ 		<button onclick="submitBooking()" class="modal-button green" >RESERVAR</button>
+ 	</div>
+ 	
+ 	<div class="section">
+ 		<h3>-- Juego de Liga? --</h3>
+ 		<button onclick="showCategoryModal()" class="modal-button green">JUEGO DE LIGA</button>
+ 	</div>  	
+   	<button onclick="closeAllModals()" class="modal-button red" >Salir</button>
+     </div>
+   </div>
+ 
+   <!-- Category Modal -->
+   <div id="categoryModal">
+     <div class="formBox">
+       <h3>Selecciona la Categoria</h3>
+       <button onclick="selectCategory('4A')" class="modal-button cat-4taA">4ta Grupo A</button>
+       <button onclick="selectCategory('4B')" class="modal-button cat-4taB">4ta Grupo B</button>
+ 	  <button onclick="selectCategory('5A')" class="modal-button cat-5taA">5ta Grupo A</button>
+       <button onclick="selectCategory('5B')" class="modal-button cat-5taB">5ta Grupo B</button>
+ 	  <button onclick="selectCategory('Mixed')" class="modal-button cat-mixta">Mixta</button>
+       <button class="modal-button red" onclick="closeAllModals()">Cancelar</button>
+     </div>
+   </div>
+ 
+   <!-- Players Modal -->
+   <div id="playersModal">
+     <div class="formBox">
+       <h3>Selecciona las 2 Parejas</h3>
+       <div id="playersList"></div>
+       <button id="leagueFinishButton" onclick="finishLeagueBooking()" style="display:none;">RESERVAR</button>
+       <button class="modal-button red" onclick="closeAllModals()">Cancelar</button>
+     </div>
+   </div>
+ 
+ 
+   <script type="module">
+     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+     import { getDatabase, ref, push, onValue, get, remove, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+ 	
+     const { DateTime } = luxon;
+     const TZ = 'America/Mexico_City';
+ 
+     const firebaseConfig = {
+       apiKey: "AIzaSyBOq0oFBM791lCs9th8wkVTGSHvLR1k_Hc",
+       authDomain: "reservas-superpadel.firebaseapp.com",
+       databaseURL: "https://reservas-superpadel-default-rtdb.firebaseio.com",
+       projectId: "reservas-superpadel",
+       storageBucket: "reservas-superpadel.appspot.com",
+       messagingSenderId: "736124396684",
+       appId: "1:736124396684:web:c0f3921a2b1ba354bcc7a9"
+     };
+ 
+     const app = initializeApp(firebaseConfig);
+     const db = getDatabase(app);
+ 
+     const bookingGrid = document.getElementById('bookingGrid');
+     const datePicker = document.getElementById('datePicker');
+     const bookedSlots = new Set();
+     const bookingsMap = new Map();
+     const courts = [1, 2, 3];
+     const times = [
+       "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00",
+       "14:00", "15:00", "16:00", "17:00", "18:00", "19:00",
+       "20:00", "21:00", "22:00", "23:00"
+     ];
+ 
+     const todayMX = DateTime.now().setZone(TZ);
+     datePicker.value = todayMX.toISODate();
+     const maxDate = todayMX.plus({ days: 7 }).toISODate();
+     datePicker.min = todayMX.toISODate();
+     datePicker.max = maxDate;
+     datePicker.addEventListener('change', buildGrid);
+ 
+     let isAdmin = false;
+ 
+ 	window.adminLogin = function() {
+ 	  document.getElementById('adminPasswordModal').style.display = 'flex';
+ 	};
+ 
+ 	window.verifyAdminPassword = async function () {
+ 	  const input = document.getElementById('adminPasswordInput').value;
+ 	  const snapshot = await get(ref(db, 'admin/password'));
+ 	  const actualPassword = snapshot.val();
+ 
+ 	  if (input === actualPassword) {
+ 		isAdmin = true;
+ 		alert("Modo Admin Activado");
+ 		datePicker.removeAttribute('max');
+ 		datePicker.removeAttribute('min');
+ 		closeAdminModal();
+ 		buildGrid();
+ 	  } else {
+ 		alert("Contraseña incorrecta.");
+ 	  }
+ 	};
+ 
+ 	window.closeAdminModal = function () {
+ 	  document.getElementById('adminPasswordModal').style.display = 'none';
+ 	  document.getElementById('adminPasswordInput').value = '';
+ 	};
+ 
+ 
+     onValue(ref(db, 'bookings/'), snapshot => {
+       bookedSlots.clear();
+       bookingsMap.clear();
+       const data = snapshot.val();
+       if (data) {
+         Object.entries(data).forEach(([slotKey, booking]) => {
+ 		  bookedSlots.add(slotKey);
+ 		  bookingsMap.set(slotKey, { ...booking });
+ 		});
+       }
+       buildGrid();
+     });
+ 
+     function buildGrid() {
+       const selectedDate = datePicker.value;
+       bookingGrid.innerHTML = '';
+       if (!selectedDate) return;
+       courts.forEach(court => {
+         const column = document.createElement('div');
+         column.className = 'court-column';
+         const title = document.createElement('div');
+         title.className = 'court-title';
+         title.textContent = `Cancha ${court}`;
+         column.appendChild(title);
+         times.forEach(time => {
+           const key = `${selectedDate}_${time}_Court${court}`;
+           const slot = document.createElement('div');
+           slot.className = 'slot';
+           slot.textContent = time;
+ 
+           const now = DateTime.now().setZone(TZ);
+           const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
+           const isToday = selectedDate === now.toISODate();
+           const isPast = slotDateTime <= now.plus({ minutes: 15 });
+ 
+           if (bookedSlots.has(key)) {
+             slot.classList.add('booked');
+             if (isAdmin) {
+ 			  const details = bookingsMap.get(key);
+ 
+ 			  if (details.team1 && details.team2) {
+ 				// League Game
+ 				slot.innerHTML += `<br><strong style="color:#f39c12;">JUEGO DE LIGA:</strong> <br> ${details.team1} vs ${details.team2}`;
+ 			  } else {
+ 				// Normal Booking
+ 				slot.innerHTML += `<br>(${details.name || ''} - ${details.phone || ''})`;
+ 			  }
+ 
+ 			  const cancelBtn = document.createElement('button');
+ 			  cancelBtn.textContent = 'Cancelar';
+ 			  cancelBtn.className = 'cancel-res-btn';
+ 			  cancelBtn.onclick = () => cancelBooking(key);
+ 			  slot.appendChild(cancelBtn);
+ 			}
+             column.appendChild(slot); // ✅ Always show reserved slots
+           } else if (!(isToday && isPast)) {
+             slot.onclick = () => openForm(key);
+             column.appendChild(slot); // ✅ Show only if it's not past
+           }
+         });
+         bookingGrid.appendChild(column);
+       });
+     }
+ 
+     let currentSlot = null;
+     let selectedTeams = [];
+ 
+     function openForm(slotKey) {
+       currentSlot = slotKey;
+       selectedTeams = [];
+       document.getElementById('formContainer').style.display = 'flex';
+     }
+     
+ 	window.cancelBooking = function(slotKey) {
+       if (!isAdmin) return;
+     
+       const reason = prompt("¿Por qué estás cancelando esta reserva?");
+       if (!reason) {
+         alert("Cancelación abortada: Debes ingresar un motivo.");
+         return;
+       }
+     
+       const bookingRef = ref(db, `bookings/${slotKey}`);
+     
+       get(bookingRef).then(snapshot => {
+         if (snapshot.exists()) {
+           const bookingData = snapshot.val();
+     
+           const cancellationData = {
+             reason: reason,
+             name: bookingData.name || "",
+             team1: bookingData.team1 || "",
+             team2: bookingData.team2 || "",
+             court: bookingData.court || "",
+ 			date: bookingData.date || "",
+ 			hour: bookingData.time || "",
+             timestamp: new Date().toISOString()
+           };
+     
+           // Store cancellation entry
+           const newCancelRef = push(ref(db, 'cancellations'));
+           set(newCancelRef, cancellationData)
+             .then(() => {
+               return remove(bookingRef); // Delete original booking
+             })
+             .then(() => {
+               alert("Reserva cancelada exitosamente.");
+               buildGrid(); // Refresh view
+             })
+             .catch(error => {
+               console.error("Error al cancelar la reserva:", error);
+               alert("Ocurrió un error al cancelar la reserva.");
+             });
+         } else {
+           alert("No se encontró la reserva.");
+         }
+       });
+     };
+ 
+ 
+ 
+     window.submitBooking = async function () {
+       const name = document.getElementById('name').value.trim();
+       const phone = document.getElementById('phone').value.trim();
+     
+       // ✅ Validate fields
+       if (!name || !phone || !currentSlot) {
+         return alert('Por Favor llena el nombre y un numero de telefono.');
+       }
+     
+       // ✅ Validate phone: only digits, exactly 10 digits
+       const isValidPhone = /^\d{10}$/.test(phone);
+       if (!isValidPhone) {
+         return alert('Por favor ingresa un número de teléfono válido de 10 dígitos (México).');
+       }
+     
+       const [date, time, courtPart] = currentSlot.split('_');
+       const court = courtPart.replace('Cancha', '');
+     
+       await set(ref(db, `bookings/${currentSlot}`), {
+         timestamp: DateTime.now().setZone(TZ).toISO(),
+         name,
+         phone,
+         date,
+         time,
+         court,
+         type: 'regular'
+       });
+ 	  const bookingData = {
+ 		timestamp: DateTime.now().setZone(TZ).toISO(),
+ 		name,
+ 		phone,
+ 		date,
+ 		time,
+ 		court,
+ 		type: 'regular'
+ 	  };
+       showConfirmationModal(bookingData); // Show detailed confirmation modal
+       bookedSlots.add(currentSlot);
+       document.getElementById('formContainer').style.display = 'none';
+       buildGrid();
+     };
+ 
+     window.showCategoryModal = function () {
+       document.getElementById('formContainer').style.display = 'none';
+       document.getElementById('categoryModal').style.display = 'flex';
+     };
+ 
+     window.selectCategory = async function (category) {
+ 	  document.getElementById('categoryModal').style.display = 'none';
+ 
+ 	  const snapshot = await get(ref(db, `players/${category}`));
+ 	  const players = snapshot.val();
+ 	  const listDiv = document.getElementById('playersList');
+ 	  listDiv.innerHTML = '';
+ 	  selectedTeams = [];
+ 
+ 	  if (!players) return;
+ 
+ 	  const color = players.color || '#e0e0e0'; // fallback color if not defined
+ 
+ 	  // Loop through all keys except 'color'
+ 	  Object.entries(players).forEach(([key, playerName]) => {
+ 		if (key === 'color') return; // skip color key
+ 		const btn = document.createElement('button');
+ 		btn.className = 'team-button';
+ 		btn.textContent = playerName;
+ 		btn.style.backgroundColor = color; // 🎨 apply the category color
+ 		btn.style.color = '#000'; // Ensure text is readable on pastel
+ 		btn.onclick = () => toggleTeamSelection(btn, playerName);
+ 		listDiv.appendChild(btn);
+ 	  });
+ 
+ 	  document.getElementById('playersModal').style.display = 'flex';
+ 	};
+ 
+ 
+     window.toggleTeamSelection = function (btn, teamName) {
+ 	  const index = selectedTeams.indexOf(teamName);
+ 
+ 	  if (index === -1) {
+ 		if (selectedTeams.length < 2) {
+ 		  selectedTeams.push(teamName);
+ 		  btn.classList.add('selected-team');
+ 		}
+ 	  } else {
+ 		selectedTeams.splice(index, 1);
+ 		btn.classList.remove('selected-team');
+ 	  }
+ 
+ 	  document.getElementById('leagueFinishButton').style.display =
+ 		selectedTeams.length === 2 ? 'block' : 'none';
+ 	};
+ 
+ 
+     window.finishLeagueBooking = async function () {
+       if (selectedTeams.length !== 2 || !currentSlot) return alert('Por Favor Selecciona las 2 parejas que jugaran.');
+       const [date, time, courtPart] = currentSlot.split('_');
+       const court = courtPart.replace('Cancha', '');
+       await set(ref(db, `bookings/${currentSlot}`), {
+ 	    timestamp: DateTime.now().setZone(TZ).toISO(),
+ 	    name: 'LEAGUE GAME',
+ 	    team1: selectedTeams[0],
+ 	    team2: selectedTeams[1],
+ 	    date,
+ 	    time,
+ 	    court,
+ 	    type: 'league'
+ 	  });
+ 
+       const bookingData = {
+ 		timestamp: DateTime.now().setZone(TZ).toISO(),
+ 		name,
+ 		team1: selectedTeams[0],
+ 	    team2: selectedTeams[1],
+ 		date,
+ 		time,
+ 		court,
+ 		type: 'regular'
+ 	  };
+ 	  showConfirmationModal(bookingData); // Show detailed confirmation modal
+       bookedSlots.add(currentSlot);
+       document.getElementById('playersModal').style.display = 'none';
+       document.getElementById('formContainer').style.display = 'none';
+       buildGrid();
+     };
+ 	
+ 	window.closeAllModals = function () {
+ 	  document.getElementById('formContainer').style.display = 'none';
+ 	  document.getElementById('categoryModal').style.display = 'none';
+ 	  document.getElementById('playersModal').style.display = 'none';
+ 	};
+ 	
+ 	function showConfirmationModal(bookingData) {
+	  const modal = document.getElementById('confirmationModal');
       const detailsDiv = document.getElementById('confirmationDetails');
-    
-      const [yearOriginal, monthOriginal, dayOriginal] = bookingData.date.split('-').map(Number);
-      const bookingDate = new Date(yearOriginal, monthOriginal - 1, dayOriginal);
-    
-      const dayOfWeek = bookingDate.toLocaleDateString('es-MX', { weekday: 'long' });
-      const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-    
-      const day = bookingDate.getDate();
-      const monthName = bookingDate.toLocaleDateString('es-MX', { month: 'long' });
-      const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-      const year = bookingDate.getFullYear();
-    
-      const formattedDate = `${capitalizedDay} ${day} de ${capitalizedMonth} ${year}`;
-    
-      let detailsHTML = '';
-    
-      if (bookingData.type === 'league') {
-        detailsHTML = `
-          <h3>JUEGO DE LIGA</h3>
-          <p><strong>${bookingData.team1}</strong> vs <strong>${bookingData.team2}</strong></p>
-          <p><strong>Fecha:</strong> ${formattedDate}</p>
-          <p><strong>Hora:</strong> ${bookingData.time}</p>
-        `;
-      } else {
-        detailsHTML = `
-          <h3>RESERVA NORMAL</h3>
-          <p><strong>Nombre:</strong> ${bookingData.name}</p>
-          <p><strong>Fecha:</strong> ${formattedDate}</p>
-          <p><strong>Hora:</strong> ${bookingData.time}</p>
-          <p><strong>Teléfono:</strong> ${bookingData.phone}</p>
-        `;
-      }
-    
-      detailsDiv.innerHTML = detailsHTML + `
-        <br><br>
-        Esta es tu confirmacion cuando llegues al club! <br><strong> ¡Toma una Captura de Pantalla! </strong>
-      `;
-    
-      modal.classList.remove('hidden');
-    }
-    
-    window.closeConfirmation = function () {
-      document.getElementById('confirmationModal').classList.add('hidden');
-    };
-	
-  </script>
-  
-  <!-- Admin Password Modal -->
-	<div id="adminPasswordModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:2000;">
-	  <div class="formBox">
-		<h3>Ingresa la contraseña de Admin</h3>
-		<input type="password" id="adminPasswordInput" placeholder="Contraseña" class="modal-input" />
-		<button class="modal-button green" onclick="verifyAdminPassword()">Ingresar</button>
-		<button class="modal-button red" onclick="closeAdminModal()">Cancelar</button>
-	  </div>
-	</div>
-	<!-- Booking Confirmation Modal -->
-    <div id="confirmationModal" class="modal hidden">
-      <div class="modal-contentconfirmation">
-        <img src="assets/logo.jpg" alt="Confirmación exitosa" class="confirmation-image" />
-        <h2>¡Reserva Confirmada!</h2>
-        <div id="confirmationDetails" class="confirmation-details"></div>
-        <button onclick="closeConfirmation()" class="close-button">Cerrar</button>
-      </div>
-    </div>
+ 	  
 
-</body>
-</html>
+	  const [yearOriginal, monthOriginal, dayOriginal] = bookingData.date.split('-').map(Number);
+	  const bookingDate = new Date(yearOriginal, monthOriginal - 1, dayOriginal);
+ 	  
+ 	  // Get weekday name in Spanish (e.g., "miércoles")
+ 	  const dayOfWeek = bookingDate.toLocaleDateString('es-MX', { weekday: 'long' });
+ 	  
+ 	  // Capitalize the first letter
+ 	  const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+ 	  
+ 	  // Get day, month name in Spanish, and year
+ 	  const day = bookingDate.getDate();
+ 	  const monthName = bookingDate.toLocaleDateString('es-MX', { month: 'long' });
+ 	  const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+ 	  const year = bookingDate.getFullYear();
+ 	  
+ 	  // Final formatted string
+ 	  const formattedDate = `${capitalizedDay} ${day} de ${capitalizedMonth} ${year}`;
+ 	  
+       let teams = bookingData.team1 && bookingData.team2
+         ? `<strong>${bookingData.team1}</strong> vs <strong>${bookingData.team2}</strong>`
+         : '';
+ 		if (teams) { // Juego de Liga
+ 			detailsDiv.innerHTML = `
+ 			<h3>JUEGO DE LIGA</h3>
+ 			<p>${teams}</p>
+ 			<p><strong>Fecha:</strong> ${formattedDate}</p>
+ 			<p><strong>Hora:</strong> ${bookingData.time}</p>
+ 			<br><br>
+ 			Esta es tu confirmacion cuando llegues al club! <br><strong> Toma una Captura de Pantalla! </strong>
+ 		  `;
+ 		}
+ 		else{ // Reserva Normal
+ 			detailsDiv.innerHTML = `
+ 			<h3>RESERVA NORMAL</h3>
+ 			<p><strong>Nombre:</strong> ${bookingData.name}</p>
+ 			<p><strong>Fecha:</strong> ${formattedDate}</p>
+ 			<p><strong>Hora:</strong> ${bookingData.time}</p>
+ 			${bookingData.phone ? "<p><strong>Teléfono:</strong> " + bookingData.phone + "</p>" : ''}
+ 			<br><br>
+ 			Esta es tu confirmacion cuando llegues al club! <br><strong> Toma una Captura de Pantalla! </strong>
+ 		  `;
+ 		}
+     
+       modal.classList.remove('hidden');
+     }
+     
+     window.closeConfirmation = function () {
+ 		document.getElementById('confirmationModal').classList.add('hidden');
+ 	};
+ 	
+   </script>
+   
+   <!-- Admin Password Modal -->
+ 	<div id="adminPasswordModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:2000;">
+ 	  <div class="formBox">
+ 		<h3>Ingresa la contraseña de Admin</h3>
+ 		<input type="password" id="adminPasswordInput" placeholder="Contraseña" class="modal-input" />
+ 		<button class="modal-button green" onclick="verifyAdminPassword()">Ingresar</button>
+ 		<button class="modal-button red" onclick="closeAdminModal()">Cancelar</button>
+ 	  </div>
+ 	</div>
+ 	<!-- Booking Confirmation Modal -->
+     <div id="confirmationModal" class="modal hidden">
+       <div class="modal-contentconfirmation">
+         <img src="assets/logo.jpg" alt="Confirmación exitosa" class="confirmation-image" />
+         <h2>¡Reserva Confirmada!</h2>
+         <div id="confirmationDetails" class="confirmation-details"></div>
+         <button onclick="closeConfirmation()" class="close-button">Cerrar</button>
+       </div>
+     </div>
+ 
+ </body>
+ </html>
