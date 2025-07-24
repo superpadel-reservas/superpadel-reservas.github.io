@@ -376,7 +376,6 @@
  	};
  
  	window.verifyAdminPassword = async function() {
-      // Get the password from the input box
       const input = document.getElementById('adminPasswordInput').value;
       if (!input) {
         return alert("Please enter a password for the test.");
@@ -384,11 +383,10 @@
     
       const verifyAdminCallable = httpsCallable(functions, 'verifyAdmin');
       try {
-        console.log("Calling password test function with payload:", { password: input });
-        // Send the password to the function
-        const result = await verifyAdminCallable({ password: input });
+        console.log("Calling direct data test with value:", input);
+        // Notice we are sending 'input' directly, not {password: input}
+        const result = await verifyAdminCallable(input);
     
-        // Show the unique message from our new function in an alert
         console.log("Response from server:", result.data);
         alert(result.data.result);
     
