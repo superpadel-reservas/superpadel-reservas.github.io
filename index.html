@@ -3,7 +3,7 @@
  <head>
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <title>Super Padel Zamora</title>
+   <title>Super Padel Zamora 1</title>
    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
    <style>
      body {
@@ -332,7 +332,8 @@
    <script type="module">
      import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
      import { getDatabase, ref, push, onValue, get, remove, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
- 	
+	 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
+	 
      const { DateTime } = luxon;
      const TZ = 'America/Mexico_City';
  
@@ -348,6 +349,7 @@
  
      const app = initializeApp(firebaseConfig);
      const db = getDatabase(app);
+	 const functions = getFunctions(app); 
  
      const bookingGrid = document.getElementById('bookingGrid');
      const datePicker = document.getElementById('datePicker');
@@ -374,21 +376,25 @@
  	};
  
  	window.verifyAdminPassword = async function () {
- 	  const input = document.getElementById('adminPasswordInput').value;
- 	  const snapshot = await get(ref(db, 'admin/password'));
- 	  const actualPassword = snapshot.val();
- 
- 	  if (input === actualPassword) {
- 		isAdmin = true;
- 		alert("Modo Admin Activado");
- 		datePicker.removeAttribute('max');
- 		datePicker.removeAttribute('min');
- 		closeAdminModal();
- 		buildGrid();
- 	  } else {
- 		alert("Contraseña incorrecta.");
- 	  }
- 	};
+      const input = document.getElementById('adminPasswordInput').value;
+      if (!input) {
+        return alert("Please enter a password for the test.");
+      }
+    
+      const verifyAdminCallable = httpsCallable(functions, 'verifyAdmin');
+    
+      try {
+        console.log("Calling the echo function with this payload:", { password: input });
+        const result = await verifyAdminCallable({ password: input });
+    
+        // This will show us the full response from the echo function
+        console.log("Response from server echo:", result.data);
+        alert("Test complete! Check the browser console (F12) for the result.");
+    
+      } catch (error) {
+        console.error("Error calling the echo function:", error);
+      }
+    };
  
  	window.closeAdminModal = function () {
  	  document.getElementById('adminPasswordModal').style.display = 'none';
