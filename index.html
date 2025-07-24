@@ -684,7 +684,7 @@
  			<p>${teams}</p>
  			<p><strong>Fecha:</strong> ${formattedDate}</p>
  			<p><strong>Hora:</strong> ${bookingData.time}</p>
-			<p><strong>Cancha:</strong> ${bookingData.court}</p>
+			<p><strong>Cancha ${bookingData.court.replace('Court', '')}</strong></p>
  			<br><br>
  			Esta es tu confirmacion cuando llegues al club! <br><strong> Toma una Captura de Pantalla! </strong>
  		  `;
@@ -695,7 +695,7 @@
  			<p><strong>Nombre:</strong> ${bookingData.name}</p>
  			<p><strong>Fecha:</strong> ${formattedDate}</p>
  			<p><strong>Hora:</strong> ${bookingData.time}</p>
-			<p><strong>Cancha:</strong> ${bookingData.court}</p>
+			<p><strong>Cancha ${bookingData.court.replace('Court', '')}</strong></p>
  			${bookingData.phone ? "<p><strong>Teléfono:</strong> " + bookingData.phone + "</p>" : ''}
  			<br><br>
  			Esta es tu confirmacion cuando llegues al club! <br><strong> Toma una Captura de Pantalla! </strong>
