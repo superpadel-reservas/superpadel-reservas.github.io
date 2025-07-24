@@ -491,51 +491,45 @@
        document.getElementById('formContainer').style.display = 'flex';
      }
      
- 	window.cancelBooking = function(slotKey) {
-       if (!isAdmin) return;
-     
-       const reason = prompt("¿Por qué estás cancelando esta reserva?");
-       if (!reason) {
-         alert("Cancelación abortada: Debes ingresar un motivo.");
-         return;
-       }
-     
-       const bookingRef = ref(db, `bookings/${slotKey}`);
-     
-       get(bookingRef).then(snapshot => {
-         if (snapshot.exists()) {
-           const bookingData = snapshot.val();
-     
-           const cancellationData = {
-             reason: reason,
-             name: bookingData.name || "",
-             team1: bookingData.team1 || "",
-             team2: bookingData.team2 || "",
-             court: bookingData.court || "",
- 			date: bookingData.date || "",
- 			hour: bookingData.time || "",
-             timestamp: new Date().toISOString()
-           };
-     
-           // Store cancellation entry
-           const newCancelRef = push(ref(db, 'cancellations'));
-           set(newCancelRef, cancellationData)
-             .then(() => {
-               return remove(bookingRef); // Delete original booking
-             })
-             .then(() => {
-               alert("Reserva cancelada exitosamente.");
-               buildGrid(); // Refresh view
-             })
-             .catch(error => {
-               console.error("Error al cancelar la reserva:", error);
-               alert("Ocurrió un error al cancelar la reserva.");
-             });
-         } else {
-           alert("No se encontró la reserva.");
-         }
-       });
-     };
+ 	window.cancelBooking = async function(slotKey) {
+      if (!isAdmin) return;
+    
+      const reason = prompt("¿Por qué estás cancelando esta reserva?");
+      if (!reason) {
+        alert("Cancelación abortada: Debes ingresar un motivo.");
+        return;
+      }
+    
+      // For this destructive action, we ask for the password again as a safeguard
+      const password = prompt("Para confirmar, por favor ingresa la contraseña de Admin:");
+      if (!password) {
+        alert("Cancelación abortada: Se requiere contraseña.");
+        return;
+      }
+    
+      const functionUrl = 'https://us-central1-reservas-superpadel.cloudfunctions.net/cancelBookingAdmin';
+    
+      try {
+        const response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slotKey, password, reason }),
+        });
+    
+        const result = await response.json();
+    
+        if (response.ok && result.success) {
+          alert("Reserva cancelada exitosamente.");
+          // The onValue listener will automatically update the grid
+        } else {
+          // Give a more specific error message if available
+          alert(`Error: ${result.error || "No se pudo cancelar la reserva."}`);
+        }
+      } catch (error) {
+        console.error("Error al cancelar la reserva:", error);
+        alert("Ocurrió un error al cancelar la reserva.");
+      }
+    };
  
  
  
@@ -633,37 +627,36 @@
  	};
  
  
-     window.finishLeagueBooking = async function () {
-       if (selectedTeams.length !== 2 || !currentSlot) return alert('Por Favor Selecciona las 2 parejas que jugaran.');
-       const [date, time, courtPart] = currentSlot.split('_');
-       const court = courtPart.replace('Cancha', '');
-       await set(ref(db, `bookings/${currentSlot}`), {
- 	    timestamp: DateTime.now().setZone(TZ).toISO(),
- 	    name: 'LEAGUE GAME',
- 	    team1: selectedTeams[0],
- 	    team2: selectedTeams[1],
- 	    date,
- 	    time,
- 	    court,
- 	    type: 'league'
- 	  });
- 
-       const bookingData = {
- 		timestamp: DateTime.now().setZone(TZ).toISO(),
- 		name,
- 		team1: selectedTeams[0],
- 	    team2: selectedTeams[1],
- 		date,
- 		time,
- 		court,
- 		type: 'regular'
- 	  };
- 	  showConfirmationModal(bookingData); // Show detailed confirmation modal
-       bookedSlots.add(currentSlot);
-       document.getElementById('playersModal').style.display = 'none';
-       document.getElementById('formContainer').style.display = 'none';
-       buildGrid();
-     };
+    window.finishLeagueBooking = async function () {
+      if (selectedTeams.length !== 2 || !currentSlot) {
+        return alert('Por Favor Selecciona las 2 parejas que jugaran.');
+      }
+      const [date, time, courtPart] = currentSlot.split('_');
+      const court = courtPart.replace('Cancha', '');
+      
+      // This is the data that will be saved to the database
+      const bookingPayload = {
+        timestamp: DateTime.now().setZone(TZ).toISO(),
+        name: 'JUEGO DE LIGA',
+        team1: selectedTeams[0],
+        team2: selectedTeams[1],
+        date,
+        time,
+        court,
+        type: 'league'
+      };
+    
+      // Save to Firebase
+      await set(ref(db, `bookings/${currentSlot}`), bookingPayload);
+      
+      // Show confirmation with the correct data
+      showConfirmationModal(bookingPayload); 
+      
+      bookedSlots.add(currentSlot);
+      document.getElementById('playersModal').style.display = 'none';
+      document.getElementById('formContainer').style.display = 'none';
+      buildGrid();
+    };
  	
  	window.closeAllModals = function () {
  	  document.getElementById('formContainer').style.display = 'none';
