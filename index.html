@@ -3,7 +3,7 @@
  <head>
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <title>Super Padel Zamora 2</title>
+   <title>Super Padel Zamora 1</title>
    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
    <style>
      body {
@@ -375,37 +375,19 @@
  	  document.getElementById('adminPasswordModal').style.display = 'flex';
  	};
  
- 	window.verifyAdminPassword = async function () {
-      const input = document.getElementById('adminPasswordInput').value;
-	  
-	  alert("The password being sent is: '" + input + "'");
-	  
-    
-      if (!input) {
-        return alert("Por favor, ingresa una contraseña.");
-      }
-    
-      // Create a reference to the Cloud Function
+ 	window.verifyAdminPassword = async function() {
       const verifyAdminCallable = httpsCallable(functions, 'verifyAdmin');
-    
       try {
-        // Call the function and pass the password as an argument
-        const result = await verifyAdminCallable({ password: input });
+        console.log("Calling the Hello World test function...");
+        const result = await verifyAdminCallable(); // No password sent
     
-        // The function returns { success: true } or { success: false }
-        if (result.data.success) {
-          isAdmin = true;
-          alert("Modo Admin Activado");
-          datePicker.removeAttribute('max');
-          datePicker.removeAttribute('min');
-          closeAdminModal();
-          buildGrid();
-        } else {
-          alert("Contraseña incorrecta.");
-        }
+        // This will show us the unique message from our new function
+        console.log("Response from server:", result.data);
+        alert("Response from server: " + result.data.result);
+    
       } catch (error) {
-        console.error("Error calling verifyAdmin function:", error);
-        alert("Ocurrió un error al verificar la contraseña. Inténtalo de nuevo.");
+        console.error("Error calling test function:", error);
+        alert("An error occurred. Check the console (F12).");
       }
     };
  
