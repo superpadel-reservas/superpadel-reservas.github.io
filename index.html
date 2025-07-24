@@ -3,7 +3,7 @@
  <head>
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <title>Super Padel Zamora 1</title>
+   <title>Super Padel Zamora</title>
    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
    <style>
      body {
@@ -378,21 +378,37 @@
  	window.verifyAdminPassword = async function() {
       const input = document.getElementById('adminPasswordInput').value;
       if (!input) {
-        return alert("Please enter a password for the test.");
+        return alert("Por favor, ingresa una contraseña.");
       }
     
-      const verifyAdminCallable = httpsCallable(functions, 'verifyAdmin');
+      // This is the public URL of your new function.
+      const functionUrl = 'https://us-central1-reservas-superpadel.cloudfunctions.net/verifyAdmin';
+    
       try {
-        console.log("Calling direct data test with value:", input);
-        // Notice we are sending 'input' directly, not {password: input}
-        const result = await verifyAdminCallable(input);
+        const response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ password: input }), // Send the password in the body
+        });
     
-        console.log("Response from server:", result.data);
-        alert(result.data.result);
+        // Get the result from the response
+        const result = await response.json();
     
+        if (response.ok && result.success) {
+          isAdmin = true;
+          alert("Modo Admin Activado");
+          datePicker.removeAttribute('max');
+          datePicker.removeAttribute('min');
+          closeAdminModal();
+          buildGrid();
+        } else {
+          alert("Contraseña incorrecta.");
+        }
       } catch (error) {
-        console.error("Error calling test function:", error);
-        alert("An error occurred. Check the console (F12).");
+        console.error("Error calling function:", error);
+        alert("Ocurrió un error al verificar la contraseña. Inténtalo de nuevo.");
       }
     };
  
