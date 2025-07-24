@@ -3,7 +3,7 @@
  <head>
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <title>Super Padel Zamora 1</title>
+   <title>Super Padel Zamora</title>
    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
    <style>
      body {
@@ -684,6 +684,7 @@
  			<p>${teams}</p>
  			<p><strong>Fecha:</strong> ${formattedDate}</p>
  			<p><strong>Hora:</strong> ${bookingData.time}</p>
+			<p><strong>Cancha:</strong> ${bookingData.court}</p>
  			<br><br>
  			Esta es tu confirmacion cuando llegues al club! <br><strong> Toma una Captura de Pantalla! </strong>
  		  `;
@@ -694,6 +695,7 @@
  			<p><strong>Nombre:</strong> ${bookingData.name}</p>
  			<p><strong>Fecha:</strong> ${formattedDate}</p>
  			<p><strong>Hora:</strong> ${bookingData.time}</p>
+			<p><strong>Cancha:</strong> ${bookingData.court}</p>
  			${bookingData.phone ? "<p><strong>Teléfono:</strong> " + bookingData.phone + "</p>" : ''}
  			<br><br>
  			Esta es tu confirmacion cuando llegues al club! <br><strong> Toma una Captura de Pantalla! </strong>
