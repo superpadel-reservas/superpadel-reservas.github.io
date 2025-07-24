@@ -376,14 +376,21 @@
  	};
  
  	window.verifyAdminPassword = async function() {
+      // Get the password from the input box
+      const input = document.getElementById('adminPasswordInput').value;
+      if (!input) {
+        return alert("Please enter a password for the test.");
+      }
+    
       const verifyAdminCallable = httpsCallable(functions, 'verifyAdmin');
       try {
-        console.log("Calling the Hello World test function...");
-        const result = await verifyAdminCallable(); // No password sent
+        console.log("Calling password test function with payload:", { password: input });
+        // Send the password to the function
+        const result = await verifyAdminCallable({ password: input });
     
-        // This will show us the unique message from our new function
+        // Show the unique message from our new function in an alert
         console.log("Response from server:", result.data);
-        alert("Response from server: " + result.data.result);
+        alert(result.data.result);
     
       } catch (error) {
         console.error("Error calling test function:", error);
