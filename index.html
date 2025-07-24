@@ -3,7 +3,7 @@
  <head>
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <title>Super Padel Zamora</title>
+   <title>Super Padel Zamora 1</title>
    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
    <style>
      body {
@@ -369,7 +369,7 @@
      datePicker.max = maxDate;
      datePicker.addEventListener('change', buildGrid);
  
-     let isAdmin = false;
+     let adminLevel = 'none'; // Can be 'none', 'semi', or 'full'
 	 let adminSessionToken = null;
  
  	window.adminLogin = function() {
@@ -378,9 +378,7 @@
  
  	window.verifyAdminPassword = async function() {
       const input = document.getElementById('adminPasswordInput').value;
-      if (!input) {
-        return alert("Por favor, ingresa una contraseña.");
-      }
+      if (!input) { return alert("Por favor, ingresa una contraseña."); }
       const functionUrl = 'https://us-central1-reservas-superpadel.cloudfunctions.net/verifyAdmin';
       try {
         const response = await fetch(functionUrl, {
@@ -391,8 +389,8 @@
         const result = await response.json();
     
         if (response.ok && result.success) {
-          isAdmin = true;
-          adminSessionToken = result.token; // Save the token from the server
+          adminLevel = result.role; // Save the role ('full' or 'semi')
+          adminSessionToken = result.token;
           alert("Modo Admin Activado");
           datePicker.removeAttribute('max');
           datePicker.removeAttribute('min');
@@ -427,55 +425,56 @@
      });
  
      function buildGrid() {
-       const selectedDate = datePicker.value;
-       bookingGrid.innerHTML = '';
-       if (!selectedDate) return;
-       courts.forEach(court => {
-         const column = document.createElement('div');
-         column.className = 'court-column';
-         const title = document.createElement('div');
-         title.className = 'court-title';
-         title.textContent = `Cancha ${court}`;
-         column.appendChild(title);
-         times.forEach(time => {
-           const key = `${selectedDate}_${time}_Court${court}`;
-           const slot = document.createElement('div');
-           slot.className = 'slot';
-           slot.textContent = time;
- 
-           const now = DateTime.now().setZone(TZ);
-           const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
-           const isToday = selectedDate === now.toISODate();
-           const isPast = slotDateTime <= now.plus({ minutes: 15 });
- 
-           if (bookedSlots.has(key)) {
-             slot.classList.add('booked');
-             if (isAdmin) {
- 			  const details = bookingsMap.get(key);
- 
- 			  if (details.team1 && details.team2) {
- 				// League Game
- 				slot.innerHTML += `<br><strong style="color:#f39c12;">JUEGO DE LIGA:</strong> <br> ${details.team1} vs ${details.team2}`;
- 			  } else {
- 				// Normal Booking
- 				slot.innerHTML += `<br>(${details.name || ''} - ${details.phone || ''})`;
- 			  }
- 
- 			  const cancelBtn = document.createElement('button');
- 			  cancelBtn.textContent = 'Cancelar';
- 			  cancelBtn.className = 'cancel-res-btn';
- 			  cancelBtn.onclick = () => cancelBooking(key);
- 			  slot.appendChild(cancelBtn);
- 			}
-             column.appendChild(slot); // ✅ Always show reserved slots
-           } else if (!(isToday && isPast)) {
-             slot.onclick = () => openForm(key);
-             column.appendChild(slot); // ✅ Show only if it's not past
-           }
-         });
-         bookingGrid.appendChild(column);
-       });
-     }
+      const selectedDate = datePicker.value;
+      bookingGrid.innerHTML = '';
+      if (!selectedDate) return;
+      courts.forEach(court => {
+        const column = document.createElement('div');
+        column.className = 'court-column';
+        const title = document.createElement('div');
+        title.className = 'court-title';
+        title.textContent = `Cancha ${court}`;
+        column.appendChild(title);
+        times.forEach(time => {
+          const key = `${selectedDate}_${time}_Court${court}`;
+          const slot = document.createElement('div');
+          slot.className = 'slot';
+          slot.textContent = time;
+    
+          const now = DateTime.now().setZone(TZ);
+          const slotDateTime = DateTime.fromISO(`${selectedDate}T${time}`, { zone: TZ });
+          const isToday = selectedDate === now.toISODate();
+          const isPast = slotDateTime <= now.plus({ minutes: 15 });
+    
+          if (bookedSlots.has(key)) {
+            slot.classList.add('booked');
+            // Show booking details for BOTH admin levels
+            if (adminLevel === 'full' || adminLevel === 'semi') {
+              const details = bookingsMap.get(key);
+              if (details.team1 && details.team2) {
+                slot.innerHTML += `<br><strong style="color:#f39c12;">JUEGO DE LIGA:</strong> <br> ${details.team1} vs ${details.team2}`;
+              } else {
+                slot.innerHTML += `<br>(${details.name || ''} - ${details.phone || ''})`;
+              }
+            }
+    
+            // ONLY show the cancel button for the 'full' admin
+            if (adminLevel === 'full') {
+              const cancelBtn = document.createElement('button');
+              cancelBtn.textContent = 'Cancelar';
+              cancelBtn.className = 'cancel-res-btn';
+              cancelBtn.onclick = () => cancelBooking(key);
+              slot.appendChild(cancelBtn);
+            }
+            column.appendChild(slot);
+          } else if (!(isToday && isPast)) {
+            slot.onclick = () => openForm(key);
+            column.appendChild(slot);
+          }
+        });
+        bookingGrid.appendChild(column);
+      });
+    }
  
      let currentSlot = null;
      let selectedTeams = [];
@@ -487,23 +486,19 @@
      }
      
  	window.cancelBooking = async function(slotKey) {
-      if (!isAdmin || !adminSessionToken) return; // Check for admin status and token
+      if (adminLevel !== 'full' || !adminSessionToken) return; // Only 'full' admins can cancel
     
       const reason = prompt("¿Por qué estás cancelando esta reserva?");
       if (!reason) {
         alert("Cancelación abortada: Debes ingresar un motivo.");
         return;
       }
-      
-      // No more password prompt!
     
       const functionUrl = 'https://us-central1-reservas-superpadel.cloudfunctions.net/cancelBookingAdmin';
-    
       try {
         const response = await fetch(functionUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          // Send the token instead of the password
           body: JSON.stringify({ slotKey, reason, token: adminSessionToken }),
         });
         const result = await response.json();
