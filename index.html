@@ -3,7 +3,7 @@
  <head>
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <title>Super Padel Zamora</title>
+   <title>Super Padel Zamora 1</title>
    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
    <style>
      body {
@@ -370,6 +370,7 @@
      datePicker.addEventListener('change', buildGrid);
  
      let isAdmin = false;
+	 let adminSessionToken = null;
  
  	window.adminLogin = function() {
  	  document.getElementById('adminPasswordModal').style.display = 'flex';
@@ -380,24 +381,18 @@
       if (!input) {
         return alert("Por favor, ingresa una contraseña.");
       }
-    
-      // This is the public URL of your new function.
       const functionUrl = 'https://us-central1-reservas-superpadel.cloudfunctions.net/verifyAdmin';
-    
       try {
         const response = await fetch(functionUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ password: input }), // Send the password in the body
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: input }),
         });
-    
-        // Get the result from the response
         const result = await response.json();
     
         if (response.ok && result.success) {
           isAdmin = true;
+          adminSessionToken = result.token; // Save the token from the server
           alert("Modo Admin Activado");
           datePicker.removeAttribute('max');
           datePicker.removeAttribute('min');
@@ -492,20 +487,15 @@
      }
      
  	window.cancelBooking = async function(slotKey) {
-      if (!isAdmin) return;
+      if (!isAdmin || !adminSessionToken) return; // Check for admin status and token
     
       const reason = prompt("¿Por qué estás cancelando esta reserva?");
       if (!reason) {
         alert("Cancelación abortada: Debes ingresar un motivo.");
         return;
       }
-    
-      // For this destructive action, we ask for the password again as a safeguard
-      const password = prompt("Para confirmar, por favor ingresa la contraseña de Admin:");
-      if (!password) {
-        alert("Cancelación abortada: Se requiere contraseña.");
-        return;
-      }
+      
+      // No more password prompt!
     
       const functionUrl = 'https://us-central1-reservas-superpadel.cloudfunctions.net/cancelBookingAdmin';
     
@@ -513,16 +503,14 @@
         const response = await fetch(functionUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slotKey, password, reason }),
+          // Send the token instead of the password
+          body: JSON.stringify({ slotKey, reason, token: adminSessionToken }),
         });
-    
         const result = await response.json();
     
         if (response.ok && result.success) {
           alert("Reserva cancelada exitosamente.");
-          // The onValue listener will automatically update the grid
         } else {
-          // Give a more specific error message if available
           alert(`Error: ${result.error || "No se pudo cancelar la reserva."}`);
         }
       } catch (error) {

@@ -1,10 +1,10 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: "https://superpadel-reservas.github.io"});
+const crypto = require("crypto");
 
 admin.initializeApp();
 
-// This function logs a user in
 exports.verifyAdmin = functions.https.onRequest((request, response) => {
   cors(request, response, async () => {
     const submittedPassword = request.body.password;
@@ -19,7 +19,17 @@ exports.verifyAdmin = functions.https.onRequest((request, response) => {
       const snapshot = await passwordRef.once("value");
 
       if (submittedPassword === snapshot.val()) {
-        return response.status(200).json({success: true});
+        // Password is correct, now create and save a session token.
+        const token = crypto.randomUUID();
+        const tokenData = {
+          token: token,
+          createdAt: admin.database.ServerValue.TIMESTAMP,
+        };
+        // Save the new token to the database
+        await admin.database().ref("admin/session").set(tokenData);
+
+        // Send success and the new token back to the browser
+        return response.status(200).json({success: true, token: token});
       } else {
         return response.status(200).json({success: false});
       }
@@ -30,36 +40,42 @@ exports.verifyAdmin = functions.https.onRequest((request, response) => {
   });
 });
 
-// This is the secure function for cancellations
 exports.cancelBookingAdmin = functions.https.onRequest((request, response) => {
   cors(request, response, async () => {
-    const {slotKey, password, reason} = request.body;
+    // We now expect a sessionToken instead of a password
+    const {slotKey, reason, token} = request.body;
     if (request.method !== "POST") {
       return response.status(405).send("Method Not Allowed");
     }
-    if (!slotKey || !password || !reason) {
+    if (!slotKey || !reason || !token) {
       return response.status(400).json({error: "Missing required fields."});
     }
 
     try {
-      // Step 1: Verify Admin Password
-      const passRef = admin.database().ref("admin/password");
-      const passwordSnapshot = await passRef.once("value");
-      if (password !== passwordSnapshot.val()) {
-        // This is the line that has been fixed
-        return response.status(403)
-            .json({error: "Forbidden: Invalid Password"});
+      // Step 1: Verify the Session Token
+      const sessionRef = admin.database().ref("admin/session");
+      const sessionSnapshot = await sessionRef.once("value");
+      const serverToken = sessionSnapshot.val();
+
+      // Check if the token from the browser matches the one on the server
+      // and check if it's less than 8 hours old
+      const isTokenValid = serverToken && serverToken.token === token;
+      const isTokenRecent = serverToken &&
+        (Date.now() - serverToken.createdAt < 8 * 60 * 60 * 1000);
+
+      if (!isTokenValid || !isTokenRecent) {
+        return response.status(403).json({error: "Forbidden: Invalid Session"});
       }
 
-      // Step 2: Get booking data to log it before deleting
+      // Step 2: Get booking data to log it
       const bookingRef = admin.database().ref(`bookings/${slotKey}`);
+      // ... (The rest of the function remains the same)
       const bookingSnapshot = await bookingRef.once("value");
       if (!bookingSnapshot.exists()) {
         return response.status(404).json({error: "Booking not found."});
       }
       const bookingData = bookingSnapshot.val();
 
-      // Step 3: Log the cancellation
       const cancellationData = {
         reason: reason,
         name: bookingData.name || "",
@@ -72,7 +88,6 @@ exports.cancelBookingAdmin = functions.https.onRequest((request, response) => {
       };
       await admin.database().ref("cancellations").push(cancellationData);
 
-      // Step 4: Delete the original booking
       await bookingRef.remove();
 
       return response.status(200).json({
